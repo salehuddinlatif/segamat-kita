@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<!-- This site is hosted on Netlify. Anyone can build and deploy a site
+     like this one for free: https://netlify.new/?utm_campaign=loops&utm_source=ai-legible&utm_medium=owned&utm_content=comment&utm_id=1b819d4e-6353-48d8-8790-399d1727896c
+     Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e5846">
+<title>Segamat Kita</title>
+<meta name="description" content="Portal komuniti Segamat: info terkini, cuaca, hotline, direktori bisnes, marketplace servis dan order makan Lapar Ek?.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="css/ui.css">
+<link rel="stylesheet" href="css/portal.css">
+</head>
+<body class="portal">
+<header class="top"><div class="wrap">
+  <a class="logo" href="#utama" id="logo"></a>
+  <nav class="topnav" id="topnav" aria-label="Utama"></nav>
+  <span class="spacer"></span>
+  <button class="iconbtn" id="searchBtn" aria-label="Cari"></button>
+  <button class="btn sm pri" id="accountBtn">Log masuk</button>
+</div></header>
+<main><div class="wrap" id="app"></div></main>
+<div id="foot"></div>
+<nav class="tabs" id="tabs" aria-label="Navigasi"></nav>
+<div id="layer"></div>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js" integrity="sha384-2zrRDgDHSYB/GN3nFW3fsZXoxEhKIr3N2h63Tc6DEOB9JJdFIu8xMJT2Cph/gBil" crossorigin="anonymous"></script>
+<script src="js/api.js"></script>
+<script src="js/common.js"></script>
+<script src="js/portal.js"></script>
+<script src="js/hotlines.js"></script>
+<script>
+// Pautan QR lama (?k=, ?order=, ?orders) dibawa ke page Lapar Ek?
+if (/[?&](k|order|orders)(=|&|$)/.test(location.search)) location.replace('lapar.html' + location.search);
+
+const app = $('#app');
+$('#logo').innerHTML = LOGO + 'Segamat Kita';
+$('#searchBtn').innerHTML = ic('search');
+$('#foot').innerHTML = footerHTML();
+const D = { posts: [], jobs: [], listings: [], shops: [], directory: [] };
+const ui = { infoTag: 'Semua', dirQ: '', dirCat: 'Semua', dirArea: 'Semua', mkQ: '', mkCat: 'Semua' };
+const INFO_LAPAR = 'Lapar Ek?', INFO_JOBS = 'Jawatan Kosong', INFO_HOT = 'Kecemasan & Hotline';
+const INFO_TABS = ['Semua', 'Berita', 'Notis', 'Event', INFO_LAPAR, INFO_JOBS, INFO_HOT];
+
+async function loadData() {
+  const safe = (p) => p.catch((e) => { console.warn(e); return []; });
+  const [posts, jobs, listings, shops, directory] = await Promise.all([api.listPosts(), api.listJobs(), api.listListings(), api.listShops(), api.listDirectory()].map(safe));
+  Object.assign(D, { posts, jobs, listings, shops, directory });
+}
+const current = () => (location.hash || '#utama').slice(1) || 'utama';
+function render(animate) {
+  const r = current(); renderPortalNav(r);
+  app.innerHTML = ({ utama: vHome, info: vInfo, direktori: vDir, market: vMarket }[r] || vHome)();
+  if (animate) { app.classList.remove('page-enter'); void app.offsetWidth; app.classList.add('page-enter'); }
+  if (r === 'direktori') renderDir();
+  if (r === 'market') renderMk();
+  if (r === 'info') loadMySubs();
+}
+window.addEventListener('hashchange', () => { closeSheet(); render(true); window.scrollTo(0, 0); });
+document.addEventListener('auth-changed', () => render());
+
+/* ================= Cuaca (MET Malaysia) & IPU (JAS) ================= */
+const WX_URL = 'https://api.data.gov.my/weather/forecast?contains=Ds082@location__location_id&sort=date';
+// Bacaan IPU stesen JAS Segamat yang terakhir disalin. Tiada suapan data awam yang boleh diambil terus.
+const IPU = { value: 126, at: '2026-10-19T03:00:00+08:00', pollutant: 'PM2.5', station: 'Segamat (CA29J)' };
+let WX = { days: [], live: false };
+function ipuCat(v) {
+  if (v <= 50) return { k: 'Baik', cls: 'ok', tip: 'Kualiti udara baik. Sesuai untuk aktiviti luar.' };
+  if (v <= 100) return { k: 'Sederhana', cls: 'warn', tip: 'Boleh beraktiviti di luar. Golongan sensitif perhatikan simptom.' };
+  if (v <= 200) return { k: 'Tidak Sihat', cls: 'bad', tip: 'Hadkan aktiviti luar. Kanak-kanak, warga emas dan pesakit asma elok di dalam bangunan. Guna pelitup N95 di luar.' };
+  if (v <= 300) return { k: 'Sangat Tidak Sihat', cls: 'bad', tip: 'Elakkan aktiviti luar. Tutup tingkap dan pintu.' };
+  return { k: 'Berbahaya', cls: 'bad', tip: 'Kekal di dalam bangunan. Ikut arahan pihak berkuasa.' };
+}
+const wxIcon = (t) => { t = (t || '').toLowerCase(); return /ribut|petir/.test(t) ? 'storm' : /hujan/.test(t) && !/tiada/.test(t) ? 'rain' : /jerebu/.test(t) ? 'haze' : /mendung|berawan/.test(t) ? 'cloud' : 'sun'; };
+const dayName = (d) => { const t = new Date(new Date().toDateString()), x = new Date(d + 'T00:00:00'); const n = Math.round((x - t) / 864e5); return n === 0 ? 'Hari ini' : n === 1 ? 'Esok' : x.toLocaleDateString('ms-MY', { weekday: 'short' }); };
+async function loadWeather() {
+  try {
+    const r = await fetch(WX_URL, { cache: 'no-store' }); if (!r.ok) throw new Error(r.status);
+    const j = await r.json(); if (!Array.isArray(j) || !j.length) throw new Error('kosong');
+    WX = { live: true, days: j.map(d => ({ date: d.date, am: d.morning_forecast, pm: d.afternoon_forecast, night: d.night_forecast, sum: d.summary_forecast, min: d.min_temp, max: d.max_temp })) };
+  } catch (e) { WX.live = false; }
+  const el = $('#wx'); if (el) el.outerHTML = wxSection();
+}
+function wxSection() {
+  const t = new Date().toISOString().slice(0, 10);
+  const days = WX.days.filter(d => d.date >= t);
+  const cat = ipuCat(IPU.value);
+  const d0 = days[0];
+  const wxCard = d0 ? `<div class="card">
+      <div class="row between"><span class="eyebrow">Cuaca Segamat · ${dayName(d0.date)}</span><span class="small muted">MET Malaysia</span></div>
+      <div class="row nowrap" style="gap:14px"><span class="wxbig">${ic(wxIcon(d0.sum), 'wxi')}</span><div class="stack" style="gap:2px;min-width:0"><b class="wxtemp num">${d0.min}°–${d0.max}°C</b><span>${esc(d0.sum)}</span></div></div>
+      <div class="wxparts">${[['Pagi', d0.am], ['Petang', d0.pm], ['Malam', d0.night]].map(([l, v]) => `<div><span class="small muted">${l}</span>${ic(wxIcon(v))}<span class="small">${esc(v)}</span></div>`).join('')}</div>
+      <div class="hscroll"><div class="wxdays">${days.slice(1).map(d => `<div class="wxday" title="${esc(d.sum)}"><span class="small muted">${dayName(d.date)}</span>${ic(wxIcon(d.sum))}<span class="small num">${d.min}°/${d.max}°</span></div>`).join('')}</div></div></div>`
+    : `<div class="card"><div class="row between"><span class="eyebrow">Cuaca Segamat</span><span class="small muted">MET Malaysia</span></div>${WX.live ? '' : `<div class="loading" style="padding:20px 0"><span class="spin"></span>Memuatkan ramalan…</div>`}</div>`;
+  const hazy = IPU.value > 100 || (d0 && /jerebu/i.test(d0.sum + d0.am + d0.pm));
+  return `<section class="block" id="wx" style="margin-top:0"><div class="wx">${wxCard}
+    <div class="card ipucard ${cat.cls}">
+      <div class="row between"><span class="eyebrow">Kualiti udara (IPU)</span><span class="small muted">JAS</span></div>
+      <div class="row nowrap" style="gap:14px;align-items:flex-end"><b class="ipunum num">${IPU.value}</b><div class="stack" style="gap:0"><b class="ipucat">${cat.k}</b><span class="small muted">${esc(IPU.pollutant)} · ${esc(IPU.station)}</span></div></div>
+      <div class="ipubar" aria-hidden="true"><i style="left:${Math.min(100, IPU.value / 3)}%"></i></div>
+      <p class="small">${cat.tip}</p>
+      <span class="small muted">Bacaan pada ${fmtTime(IPU.at)}, ${fmtDate(IPU.at)}. Bacaan berubah setiap jam.</span>
+      <div class="row"><a class="btn sm" href="https://hazemonitor.com/station/segamat" target="_blank" rel="noopener">Bacaan terkini ${ic('arrow')}</a><a class="btn sm ghost" href="https://eqms.doe.gov.my/APIMS/main" target="_blank" rel="noopener">Laman rasmi JAS</a></div></div></div>
+    ${hazy ? `<div class="card sos" style="margin-top:12px"><b>Jerebu di Segamat</b><span class="small">Hadkan aktiviti luar, minum air secukupnya dan pakai pelitup muka bila keluar.</span></div>` : ''}</section>`;
+}
+
+/* ================= Utama ================= */
+function shopCard(s) {
+  return `<a class="card link shopcard" href="lapar.html?k=${esc(s.slug)}" style="--h:${hue(s.name)}">
+    <div class="cv">${s.is_open ? '<span class="pill ok"><span class="dot"></span>Terima order</span>' : '<span class="pill">Tutup sementara</span>'}<span class="pill">${ic('clock')}~${s.prep_min} min</span></div>
+    <div class="bd"><h3>${esc(s.name)}</h3><span class="small muted">${esc(s.cuisine || 'Kedai makan')} · ${esc(s.area)}</span></div></a>`;
+}
+function postCard(p) {
+  const cls = { Notis: 'warn', Event: 'ok', Berita: '', 'Lapar Ek?': 'acc' }[p.tag] ?? '';
+  return `<article class="card post"><div class="row"><span class="pill ${cls}">${esc(p.tag)}</span><span class="small muted">${fmtDate(p.created_at)} · ${esc(p.area)}</span></div>
+    ${p.image_url ? `<img class="post-img" src="${esc(safeUrl(p.image_url))}" alt="" loading="lazy">` : ''}
+    <h3>${esc(p.title)}</h3><details><summary>Baca lagi</summary><p class="muted" style="white-space:pre-line">${esc(p.body)}</p>${p.author_name ? `<p class="small muted" style="margin-top:6px">Dikongsi oleh ${esc(p.author_name)}</p>` : ''}</details>
+    ${p.tag === INFO_LAPAR ? `<a class="btn sm" style="justify-self:start" href="lapar.html">Lihat kedai Lapar Ek? ${ic('arrow')}</a>` : ''}</article>`;
+}
+function vHome() {
+  const verified = D.listings.filter(l => l.provider?.verified).slice(0, 3), open = D.shops.filter(s => s.is_open).slice(0, 3);
+  return `${wxSection()}
+  <section class="block"><div class="quick">
+    <a href="#info"><span class="qi">${ic('news')}</span><b>Info terkini</b><span>Berita, Notis, Event, Jawatan Kosong, Kecemasan & Hotline dan lain-lain</span></a>
+    <a href="#direktori"><span class="qi">${ic('list')}</span><b>Direktori</b><span>Bisnes Tempatan, Tempat Menarik dan lain-lain</span></a>
+    <a href="#market"><span class="qi">${ic('market')}</span><b>Marketplace</b><span>Ejen Cuckoo, Coway, Takaful, dan pelbagai servis menarik</span></a>
+    <a href="lapar.html"><span class="qi">${ic('bowl')}</span><b>Lapar Ek?</b><span>Order dine-in atau pickup</span></a></div></section>
+  <section class="block"><div class="sec-head"><h2>Info terkini</h2><a href="#info">Semua info →</a></div>
+    ${D.posts.length ? `<div class="grid g3">${D.posts.slice(0, 3).map(postCard).join('')}</div>` : emptyState('news', 'Belum ada info. <a href="#info" data-submit-info>Kongsi info pertama</a>.')}</section>
+  <section class="block"><div class="sec-head"><h2>Servis disahkan</h2><a href="#market">Marketplace →</a></div>
+    ${verified.length ? `<div class="grid g3">${verified.map(listingCard).join('')}</div>` : emptyState('market', 'Belum ada servis disahkan. <a href="penyedia.html">Jadi Partner Marketplace</a>.')}</section>
+  <section class="block"><div class="sec-head"><h2>Lapar Ek? Order sekarang</h2><a href="lapar.html">Semua kedai →</a></div>
+    ${open.length ? `<div class="grid g3">${open.map(shopCard).join('')}</div>` : emptyState('bowl', 'Belum ada kedai yang terima order. <a href="peniaga.html">Jadi Partner Lapar Ek?</a>.')}</section>
+  <section class="block"><div class="card" style="background:var(--soft);border-color:transparent;padding:22px">
+    <div class="row between"><div class="stack" style="max-width:56ch"><h2>Ada bisnes di Segamat?</h2><p class="muted">Dapatkan page menu dengan QR code dan terima order, atau iklankan servis anda di Marketplace. Percuma untuk bermula.</p></div>
+    <div class="row"><a class="btn pri" href="peniaga.html">${ic('bowl')}Jadi Partner Lapar Ek?</a><a class="btn" href="penyedia.html">${ic('market')}Jadi Partner Marketplace</a></div></div></div></section>`;
+}
+
+/* ================= Info ================= */
+function vInfo() {
+  const t = ui.infoTag;
+  const chips = `<div class="hscroll"><div class="chips">${INFO_TABS.map(x => `<button class="chip ${t === x ? 'on' : ''}" data-info-tab="${x}">${x === INFO_HOT ? ic('phone') : x === INFO_JOBS ? ic('brief') : x === INFO_LAPAR ? ic('bowl') : ''}${x}</button>`).join('')}</div></div>`;
+  let body;
+  if (t === INFO_HOT) body = hotlineView();
+  else if (t === INFO_JOBS) body = jobsView();
+  else {
+    const list = D.posts.filter(p => t === 'Semua' || p.tag === t);
+    body = `${t === 'Semua' ? sosStrip() : ''}
+      ${list.length ? `<div class="grid g2">${list.map(postCard).join('')}</div>` : emptyState('news', 'Belum ada info dalam kategori ini.')}
+      ${t === 'Semua' && D.jobs.length ? `<div class="sec-head" style="margin-top:12px"><h2>Jawatan kosong terkini</h2><button class="btn ghost sm" data-info-tab="${INFO_JOBS}">Semua jawatan →</button></div><div class="grid g2">${D.jobs.slice(0, 2).map(jobCard).join('')}</div>` : ''}`;
+  }
+  return `<div class="row between" style="align-items:flex-end"><div class="stack"><p class="eyebrow">Info Segamat</p><h1>Apa yang berlaku di Segamat</h1><p class="muted">Notis, event, berita, hotline kecemasan dan jawatan kosong sekitar daerah.</p></div>
+    <button class="btn pri" data-submit-info>${ic('plus')}Hantar info</button></div>
+  <div id="mysubs"></div>
+  <section class="block">${chips}${body}</section>`;
+}
+async function loadMySubs() {
+  const el = $('#mysubs'); if (!el || !Auth.user) return;
+  const rows = await api.mySubmissions().catch(() => []); if (!rows.length || !$('#mysubs')) return;
+  el.innerHTML = `<details class="card mysubs" style="margin-top:16px"><summary><b>Hantaran saya</b><span class="small muted">${rows.filter(s => s.status === 'menunggu').length} menunggu kelulusan</span></summary>
+    <div class="list" style="margin-top:10px">${rows.slice(0, 15).map(s => `<div class="row between nowrap small"><span class="clamp" style="min-width:0">${s.kind === 'job' ? 'Jawatan: ' : ''}${esc(s.title)}</span>${statusPill(s.status)}</div>${s.status === 'tolak' && s.reason ? `<span class="small muted">Sebab: ${esc(s.reason)}</span>` : ''}`).join('')}</div></details>`;
+}
+const sosStrip = () => `<div class="card sos"><div class="row between"><div class="row nowrap">${ic('phone')}<div class="stack" style="gap:0"><b>Kecemasan? Dail <span class="num">999</span></b><span class="small">Polis, ambulans dan bomba. Dari telefon bimbit boleh juga dail 112.</span></div></div>
+  <button class="btn sm" data-info-tab="${INFO_HOT}">Maklumat Kecemasan, Utiliti, Pihak Berkuasa Tempatan & Pejabat Kerajaan Daerah Segamat</button></div></div>`;
+function hotlineView() {
+  const groups = [...new Set(HOTLINES.map(h => h.group))];
+  const hours = (h) => h.hours ? (/24 jam/.test(h.hours) ? `<span class="pill ok"><span class="dot"></span>${esc(h.hours)}</span>` : `<span class="pill" style="white-space:normal">${ic('clock')}${esc(h.hours)}</span>`) : '';
+  const nums = (h) => (h.nums || (h.num ? [{ label: '', num: h.num }] : [])).map(n => `<div class="row between nowrap" style="margin-top:6px;gap:8px"><div class="stack" style="gap:0;min-width:0">${n.label ? `<span class="small muted">${esc(n.label)}</span>` : ''}<span class="hotnum num">${esc(n.num)}</span></div><button class="btn sm" data-copy="${esc(n.num)}">Salin</button></div>`).join('');
+  return `<div class="card sos"><b>Dalam kecemasan, terus dail 999.</b><span class="small">Beritahu lokasi anda dengan jelas: nama taman, jalan dan tanda tempat berdekatan.</span></div>
+  ${groups.map(g => `<div class="stack" style="gap:10px"><h3 class="eyebrow" style="font-size:13px">${esc(g)}</h3><div class="grid g2">${HOTLINES.filter(h => h.group === g).map(h => `
+    <div class="item"><div class="thumb sm" style="--h:${hue(g)}">${ic('phone', '')}</div><div class="body">
+      <b>${esc(h.name)}</b>${h.note ? `<span class="small muted">${esc(h.note)}</span>` : ''}
+      ${h.addr ? `<span class="small muted">${esc(h.addr)}</span><span class="row small" style="gap:8px">${hours(h)}${h.map ? `<a href="${esc(safeUrl(h.map))}" target="_blank" rel="noopener">${ic('pin')} Lihat di peta</a>` : ''}</span>` : ''}
+      ${nums(h)}</div></div>`).join('')}</div></div>`).join('')}
+  <p class="small muted">Untuk sebarang kecemasan, talian sehenti 999 menghubungkan polis, ambulans dan bomba.</p>`;
+}
+function jobCard(j) {
+  const left = Math.ceil((new Date(j.close_date) - new Date(new Date().toDateString())) / 864e5);
+  return `<div class="card"><div class="row between nowrap"><div class="stack" style="gap:0;min-width:0"><h3>${esc(j.title)}</h3><span class="small muted">${esc(j.employer)}</span></div>
+    <span class="pill ${left <= 3 ? 'bad' : ''}">${left === 0 ? 'Tutup hari ini' : 'Tutup ' + fmtDate(j.close_date)}</span></div>
+    <div class="row small" style="gap:8px"><span class="pill">${esc(j.job_type)}</span><span class="muted">${ic('pin')} ${esc(j.area)}</span></div>
+    <span class="price">${esc(j.pay)}<span class="small muted" style="font-family:var(--f-body);font-weight:500">${esc(j.pay_unit)}</span></span>
+    ${j.req ? `<p class="small muted">${esc(j.req)}</p>` : ''}
+    <div class="row"><a class="btn wa sm" target="_blank" rel="noopener" href="${wa(j.phone, 'Salam, saya berminat dengan jawatan ' + j.title + ' di ' + j.employer + ' (Segamat Kita).')}">${ic('chat')}Mohon via WhatsApp</a><span class="small muted num">${fmtPhone(j.phone)}</span></div></div>`;
+}
+function jobsView() {
+  return `<div class="card" style="background:var(--soft);border-color:transparent"><div class="row between"><div class="stack" style="gap:2px;max-width:52ch"><h3>Majikan di Segamat?</h3><p class="small muted">Iklankan jawatan kosong secara percuma. Iklan dipaparkan selepas disemak admin.</p></div>
+    <button class="btn pri" data-new-job>${ic('plus')}Iklan jawatan</button></div></div>
+  ${D.jobs.length ? `<div class="grid g2">${D.jobs.map(jobCard).join('')}</div>` : emptyState('brief', 'Tiada jawatan kosong buat masa ini.')}`;
+}
+function needLogin(msg) { if (Auth.user) return false; openLogin(location.href, msg); return true; }
+function openSubmit() {
+  if (needLogin('Log masuk untuk hantar info')) return;
+  sheet(`${sheetHead('Hantar info')}
+  <p class="small muted">Kongsi berita, notis atau event di Segamat. Admin akan semak dahulu sebelum ia dipaparkan.</p>
+  <form id="subForm" class="stack" style="gap:12px">
+   <div class="frow two"><div class="field"><label for="sbCat">Kategori</label><select class="input" id="sbCat">${['Berita', 'Notis', 'Event', INFO_LAPAR].map(c => `<option>${c}</option>`).join('')}</select></div>
+   <div class="field"><label for="sbArea">Kawasan</label><select class="input" id="sbArea">${AREAS.map(a => `<option>${esc(a)}</option>`).join('')}</select></div></div>
+   <div class="field"><label for="sbTitle">Tajuk</label><input class="input" id="sbTitle" required minlength="3" maxlength="120" placeholder="Contoh: Gotong-royong Taman Yayasan, Ahad ini"></div>
+   <div class="field"><label for="sbBody">Butiran</label><textarea class="input" id="sbBody" required minlength="3" maxlength="2000" placeholder="Apa, bila, di mana, dan siapa boleh dihubungi"></textarea></div>
+   <div class="field"><label for="sbImg">Gambar (pilihan)</label><input class="input" id="sbImg" type="file" accept="image/*"><div id="sbPrev"></div></div>
+   <div id="subErr"></div>
+   <p class="small muted">Info palsu, iklan berbayar atau kandungan menyinggung akan ditolak.</p>
+   <button class="btn pri lg block">Hantar untuk semakan</button></form>`);
+}
+function openNewJob() {
+  if (needLogin('Log masuk untuk iklan jawatan')) return;
+  const close = new Date(Date.now() + 14 * 864e5).toISOString().slice(0, 10);
+  sheet(`${sheetHead('Iklan jawatan kosong')}
+  <form id="jobForm" class="stack" style="gap:12px">
+   <div class="field"><label for="jTitle">Jawatan</label><input class="input" id="jTitle" required maxlength="80" placeholder="Contoh: Pembantu Kedai"></div>
+   <div class="frow two"><div class="field"><label for="jEmp">Nama majikan / kedai</label><input class="input" id="jEmp" required maxlength="80"></div>
+   <div class="field"><label for="jArea">Kawasan</label><select class="input" id="jArea">${AREAS.map(a => `<option>${esc(a)}</option>`).join('')}</select></div></div>
+   <div class="frow two"><div class="field"><label for="jType">Jenis</label><select class="input" id="jType">${['Sepenuh masa', 'Separuh masa', 'Harian / Kontrak'].map(x => `<option>${x}</option>`).join('')}</select></div>
+   <div class="field"><label for="jClose">Tarikh tutup</label><input class="input" id="jClose" type="date" required value="${close}"></div></div>
+   <div class="frow two"><div class="field"><label for="jPay">Gaji</label><input class="input" id="jPay" required placeholder="RM 1,700"></div>
+   <div class="field"><label for="jUnit">Per</label><select class="input" id="jUnit"><option>/bulan</option><option>/hari</option><option>/jam</option></select></div></div>
+   <div class="field"><label for="jPhone">No. WhatsApp untuk mohon</label><input class="input" id="jPhone" required inputmode="tel" placeholder="012-345 6789"></div>
+   <div class="field"><label for="jReq">Syarat & butiran</label><textarea class="input" id="jReq" maxlength="400"></textarea></div>
+   <div id="jobErr"></div>
+   <p class="small muted">Gaji minimum di Malaysia ialah RM1,700 sebulan untuk pekerja sepenuh masa. Iklan dipaparkan selepas disemak admin.</p>
+   <button class="btn pri lg block">Hantar untuk semakan</button></form>`);
+}
+
+/* ================= Direktori ================= */
+function vDir() {
+  return `<div class="stack"><p class="eyebrow">Direktori</p><h1>Bisnes & tempat di Segamat</h1></div>
+  <section class="block" style="gap:10px">
+    <div class="searchbox">${ic('search')}<input class="input" id="dirQ" type="search" placeholder="Cari nama, servis atau menu" value="${esc(ui.dirQ)}" aria-label="Cari direktori"></div>
+    <div class="hscroll"><div class="chips">${['Semua', ...DIR_CATS].map(c => `<button class="chip ${ui.dirCat === c ? 'on' : ''}" data-dircat="${c}">${c !== 'Semua' ? ic(DIR_IC[c]) : ''}${c}</button>`).join('')}</div></div>
+    <select class="input" id="dirArea" aria-label="Kawasan">${['Semua', ...AREAS].map(a => `<option value="${esc(a)}" ${ui.dirArea === a ? 'selected' : ''}>${a === 'Semua' ? 'Semua kawasan' : esc(a)}</option>`).join('')}</select>
+  </section><section class="block" id="dirList" aria-live="polite"></section>`;
+}
+function renderDir() {
+  const q = ui.dirQ.toLowerCase().trim();
+  const all = [...D.shops.map(s => ({ name: s.name, cat: 'Kedai Makan', area: s.area, phone: s.phone, hours: s.hours, descr: s.cuisine, slug: s.slug })), ...D.directory];
+  const rows = all.filter(x => (!q || (x.name + ' ' + x.descr + ' ' + x.cat).toLowerCase().includes(q)) && (ui.dirCat === 'Semua' || x.cat === ui.dirCat) && (ui.dirArea === 'Semua' || x.area === ui.dirArea));
+  const mk = q ? D.listings.filter(l => (l.title + ' ' + l.descr + ' ' + l.provider?.name + ' ' + l.provider?.role).toLowerCase().includes(q)) : [];
+  $('#dirList').innerHTML = `<p class="small muted">${rows.length} tempat</p><div class="list">${rows.map(x => `
+    <div class="item">${thumb(x.cat, { icon: DIR_IC[x.cat] })}<div class="body"><div class="row between nowrap"><b>${esc(x.name)}</b><span class="pill hide-sm">${esc(x.cat)}</span></div>
+      ${x.descr ? `<span class="small muted">${esc(x.descr)}</span>` : ''}<span class="small row" style="gap:12px"><span>${ic('pin')} ${esc(x.area)}</span>${x.hours ? `<span>${ic('clock')} ${esc(x.hours)}</span>` : ''}</span>
+      ${x.address ? `<span class="small muted">${esc(x.address)}</span>` : ''}
+      <div class="row" style="margin-top:8px;gap:6px">${x.slug ? `<a class="btn pri sm" href="lapar.html?k=${esc(x.slug)}">${ic('bowl')}Menu & order</a>` : ''}
+      ${x.phone ? `<a class="btn wa sm" target="_blank" rel="noopener" href="${wa(x.phone, 'Salam, saya jumpa ' + x.name + ' di Segamat Kita.')}">${ic('chat')}WhatsApp</a><span class="small muted num">${fmtPhone(x.phone)}</span>` : ''}
+      ${x.map_url ? `<a class="btn sm" target="_blank" rel="noopener" href="${esc(safeUrl(x.map_url))}">${ic('pin')}Peta</a>` : ''}</div></div></div>`).join('')
+    || (ui.dirCat === 'Tempat Menarik' && !q ? emptyState('pin', 'Senarai tempat menarik di Segamat akan ditambah tidak lama lagi.') : emptyState('search', 'Tiada padanan. Cuba kata kunci lain atau pilih "Semua kawasan".'))}</div>
+    ${mk.length ? `<div class="sec-head" style="margin-top:16px"><h2>Juga dalam Marketplace</h2></div><div class="grid g2">${mk.map(listingCard).join('')}</div>` : ''}`;
+}
+
+/* ================= Marketplace ================= */
+function vMarket() {
+  return `<div class="row between" style="align-items:flex-end"><div class="stack"><p class="eyebrow">Marketplace</p><h1>Ejen, tukang dan servis Segamat</h1><p class="muted">Penapis air, insurans, bateri kereta, wiring, aircond dan banyak lagi. Cari yang ada lencana Disahkan.</p></div>
+    <a class="btn" href="penyedia.html">${ic('plus')}Iklankan servis anda</a></div>
+  <section class="block" style="gap:10px">
+    <div class="searchbox">${ic('search')}<input class="input" id="mkQ" type="search" placeholder="Cari: Coway, bateri, takaful" value="${esc(ui.mkQ)}" aria-label="Cari Marketplace"></div>
+    <div class="hscroll"><div class="chips">${['Semua', ...MK_CATS].map(c => `<button class="chip ${ui.mkCat === c ? 'on' : ''}" data-mkcat="${c}">${c !== 'Semua' ? ic(MK_IC[c]) : ''}${c}</button>`).join('')}</div></div>
+  </section><section class="block" id="mkList" aria-live="polite"></section>`;
+}
+function renderMk() {
+  const q = ui.mkQ.toLowerCase().trim();
+  const rows = D.listings.filter(l => (ui.mkCat === 'Semua' || l.cat === ui.mkCat) && (!q || (l.title + ' ' + l.descr + ' ' + l.provider?.name + ' ' + l.provider?.role).toLowerCase().includes(q)))
+    .sort((a, b) => (b.provider?.verified - a.provider?.verified));
+  $('#mkList').innerHTML = `<p class="small muted">${rows.length} tawaran · disahkan dahulu</p>${rows.length ? `<div class="grid g3">${rows.map(listingCard).join('')}</div>` : emptyState('market', 'Tiada tawaran sepadan.')}`;
+}
+function openListing(id) {
+  const l = D.listings.find(x => x.id === id); if (!l) return; const p = l.provider || {};
+  sheet(`${sheetHead(esc(l.title), l.cat)}
+    <div class="row nowrap">${thumb(p.name || '?', { cls: 'sm', icon: 'store' })}<div class="stack" style="gap:0"><b>${esc(p.name)}</b><span class="small muted">${esc(p.role)} ${p.verified ? `<span class="verified">${ic('tick')}Disahkan</span>` : ''}</span></div></div>
+    <p class="muted" style="white-space:pre-line">${esc(l.descr)}</p>
+    ${l.inc?.length ? `<div class="stack"><b>Termasuk</b><ul class="inc">${l.inc.map(i => `<li>${ic('check')}${esc(i)}</li>`).join('')}</ul></div>` : ''}
+    <div class="small muted">${ic('pin')} Kawasan: ${esc(l.area)}</div>
+    ${p.verified ? `<div class="small" style="background:var(--soft);padding:10px 12px;border-radius:12px"><b>Disahkan</b> bermaksud Segamat Kita telah semak IC dan kad ejen atau sijil penyedia ini.</div>` : ''}
+    <div class="sticky-foot"><div class="row between"><span class="price">${esc(l.price)}<span class="small muted" style="font-family:var(--f-body);font-weight:500">${esc(l.unit)}</span></span><span class="small muted num">${fmtPhone(p.phone)}</span></div>
+      <div class="frow two"><a class="btn wa lg" target="_blank" rel="noopener" href="${wa(p.phone, 'Salam, saya nampak "' + l.title + '" di Segamat Kita.')}">${ic('chat')}WhatsApp</a><button class="btn pri lg" data-quote="${l.id}">Minta sebut harga</button></div></div>`);
+}
+function openQuote(id) {
+  if (needLogin('Log masuk untuk minta sebut harga')) return;
+  const l = D.listings.find(x => x.id === id);
+  sheet(`${sheetHead('Minta sebut harga')}
+  <p class="muted">Kepada <b>${esc(l.provider?.name)}</b> untuk “${esc(l.title)}”.</p>
+  <form id="quoteForm" class="stack" style="gap:12px" data-id="${l.id}">
+   <div class="frow two"><div class="field"><label for="qName">Nama</label><input class="input" id="qName" required value="${esc(Auth.name())}"></div>
+   <div class="field"><label for="qArea">Kawasan</label><select class="input" id="qArea">${AREAS.map(a => `<option>${esc(a)}</option>`).join('')}</select></div></div>
+   <div class="field"><label for="qPhone">No. WhatsApp</label><input class="input" id="qPhone" required inputmode="tel" placeholder="012-345 6789"></div>
+   <div class="field"><label for="qNeed">Apa yang anda perlukan?</label><textarea class="input" id="qNeed" required minlength="3" placeholder="Contoh: rumah teres 2 tingkat, nak pasang penapis di dapur"></textarea></div>
+   <div id="qErr"></div>
+   <button class="btn pri lg block">Hantar permintaan</button></form>`);
+}
+
+/* ================= Event ================= */
+document.addEventListener('click', async (e) => {
+  const t = e.target;
+  const it = t.closest('[data-info-tab]');
+  if (it) { e.preventDefault(); ui.infoTag = it.dataset.infoTab; if (current() === 'info') { render(); window.scrollTo(0, 0); } else location.hash = 'info'; return; }
+  if (t.closest('[data-submit-info]')) { e.preventDefault(); openSubmit(); return; }
+  if (t.closest('[data-new-job]')) { openNewJob(); return; }
+  const cp = t.closest('[data-copy]'); if (cp) { try { await navigator.clipboard.writeText(cp.dataset.copy); toast('Nombor ' + cp.dataset.copy + ' disalin'); } catch (er) { toast('Nombor: ' + cp.dataset.copy); } return; }
+  const dc = t.closest('[data-dircat]'); if (dc) { ui.dirCat = dc.dataset.dircat; $$('[data-dircat]').forEach(b => b.classList.toggle('on', b === dc)); renderDir(); return; }
+  const mc = t.closest('[data-mkcat]'); if (mc) { ui.mkCat = mc.dataset.mkcat; $$('[data-mkcat]').forEach(b => b.classList.toggle('on', b === mc)); renderMk(); return; }
+  const ls = t.closest('[data-listing]'); if (ls) { openListing(ls.dataset.listing); return; }
+  const qt = t.closest('[data-quote]'); if (qt) { openQuote(qt.dataset.quote); return; }
+  if (t.closest('#searchBtn')) {
+    sheet(`${sheetHead('Cari di Segamat Kita')}
+      <form class="searchbox" id="searchForm" role="search">${ic('search')}<input class="input" id="searchQ" type="search" placeholder="Nasi lemak, aircond, Coway…" aria-label="Cari" enterkeyhint="search"></form>
+      <div class="stack"><span class="small muted">Cadangan</span><div class="chips">${['Nasi lemak', 'Coway', 'Aircond', 'Bateri', 'Insurans', 'Klinik'].map(q => `<button class="chip" data-quick="${q}">${q}</button>`).join('')}</div></div>
+      <div class="stack"><span class="small muted">Ikut kawasan</span><div class="chips">${AREAS.map(a => `<button class="chip" data-area="${esc(a)}">${ic('pin')}${esc(a)}</button>`).join('')}</div></div>`);
+    setTimeout(() => $('#searchQ')?.focus(), 50); return;
+  }
+  const qk = t.closest('[data-quick]'); if (qk) { goSearch(qk.dataset.quick, 'Semua'); return; }
+  const ar = t.closest('[data-area]'); if (ar) { goSearch('', ar.dataset.area); return; }
+});
+function goSearch(q, area) { ui.dirQ = q; ui.dirCat = 'Semua'; ui.dirArea = area; closeSheet(); if (current() === 'direktori') render(); else location.hash = 'direktori'; }
+document.addEventListener('input', (e) => {
+  if (e.target.id === 'dirQ') { ui.dirQ = e.target.value; renderDir(); }
+  if (e.target.id === 'mkQ') { ui.mkQ = e.target.value; renderMk(); }
+});
+document.addEventListener('change', (e) => {
+  const t = e.target;
+  if (t.id === 'dirArea') { ui.dirArea = t.value; renderDir(); }
+  if (t.id === 'sbImg') { const f = t.files[0]; $('#sbPrev').innerHTML = f ? `<img src="${URL.createObjectURL(f)}" alt="" style="max-height:140px;border-radius:10px;margin-top:6px">` : ''; }
+});
+document.addEventListener('submit', async (e) => {
+  e.preventDefault(); const f = e.target;
+  const fail = (box, m) => { $(box).innerHTML = `<div class="err">${ic('alert')}${esc(m)}</div>`; };
+  const busyBtn = (on) => { const b = f.querySelector('button.pri'); if (b) { b.disabled = on; if (on) { b.dataset.t = b.textContent; b.innerHTML = '<span class="spin"></span>Menghantar…'; } else b.textContent = b.dataset.t || b.textContent; } };
+  if (f.id === 'searchForm') { goSearch($('#searchQ').value.trim(), 'Semua'); return; }
+  try {
+    if (f.id === 'subForm') {
+      busyBtn(true);
+      const file = $('#sbImg').files[0]; const blob = file ? await imageToBlob(file, 1000) : null;
+      await api.submitPost({ tag: $('#sbCat').value, title: $('#sbTitle').value.trim(), body: $('#sbBody').value.trim(), area: $('#sbArea').value }, blob);
+      closeSheet(); toast('Terima kasih! Info anda akan dipaparkan selepas diluluskan admin.'); render();
+    }
+    if (f.id === 'jobForm') {
+      busyBtn(true);
+      await api.submitJob({ title: $('#jTitle').value.trim(), employer: $('#jEmp').value.trim(), area: $('#jArea').value, job_type: $('#jType').value, pay: $('#jPay').value.trim(), pay_unit: $('#jUnit').value, close_date: $('#jClose').value, req: $('#jReq').value.trim(), phone: normPh($('#jPhone').value) });
+      closeSheet(); toast('Iklan dihantar. Ia akan dipaparkan selepas diluluskan admin.'); render();
+    }
+    if (f.id === 'quoteForm') {
+      busyBtn(true);
+      await api.requestQuote({ listing_id: f.dataset.id, name: $('#qName').value.trim(), phone: $('#qPhone').value.trim(), area: $('#qArea').value, need: $('#qNeed').value.trim() });
+      closeSheet(); toast('Permintaan dihantar. Penyedia akan menghubungi anda melalui WhatsApp.');
+    }
+  } catch (er) { busyBtn(false); fail(f.id === 'subForm' ? '#subErr' : f.id === 'jobForm' ? '#jobErr' : '#qErr', er.message); }
+});
+
+if (demoBanner()) {
+  app.innerHTML = loading();
+  Promise.all([initAuth(), loadData()]).finally(() => { render(true); loadWeather(); });
+}
+</script>
+</body>
+</html>
+<script async src="/.netlify/scripts/hud?variant=public" data-nf-variant="public" data-netlify-site-id="1b819d4e-6353-48d8-8790-399d1727896c" data-app-host="app.netlify.com" data-account-tier="free"></script>

@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<!-- This site is hosted on Netlify. Anyone can build and deploy a site
+     like this one for free: https://netlify.new/?utm_campaign=loops&utm_source=ai-legible&utm_medium=owned&utm_content=comment&utm_id=1b819d4e-6353-48d8-8790-399d1727896c
+     Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e5846">
+<meta name="robots" content="noindex">
+<title>Panel Admin · Segamat Kita</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="css/ui.css">
+<link rel="stylesheet" href="css/portal.css">
+<style>.auth{max-width:460px;margin:4vh auto 0;display:grid;gap:16px}.auth .card{padding:22px;gap:14px}.docs img{height:110px;border-radius:8px;border:1px solid var(--line)}
+/* dashboard Lapar Ek? */
+.lk-grid{display:grid;gap:10px;grid-template-columns:repeat(2,1fr)}
+@media (min-width:760px){.lk-grid{grid-template-columns:repeat(5,1fr)}}
+.lk-tile{display:grid;gap:2px;justify-items:start;text-align:left;font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;cursor:pointer;min-width:0}
+.lk-tile svg{color:var(--muted)}
+.lk-tile b{font-family:var(--f-display);font-size:28px;line-height:1.1;font-variant-numeric:tabular-nums}
+.lk-tile span{font-weight:700;font-size:14px}
+.lk-tile.has{border-color:var(--warn);background:var(--warn-bg)}
+.lk-tile.has b,.lk-tile.has svg{color:var(--warn)}
+.lk-tile.on{border-color:var(--brand);box-shadow:inset 0 0 0 2px var(--brand)}
+.lk-group{display:grid;gap:12px;margin-top:8px}
+.lk-shop{border:1px dashed var(--line);border-radius:var(--r);padding:12px;display:grid;gap:10px}
+.diff{display:grid;gap:10px;background:var(--soft);border-radius:12px;padding:10px 12px}
+.diff-row{display:grid;gap:2px;font-size:14px}
+.diff-old{color:var(--muted);text-decoration:line-through}
+.diff-new{color:var(--ok);font-weight:700}
+.diff img,.menu-img{height:84px;border-radius:8px;border:1px solid var(--line)}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class='logo' href='/' id='logo'></a>
+  <span class="spacer"></span>
+  <span id="headActions" class="row nowrap" style="gap:8px"></span>
+</div></header>
+<main><div class="wrap" id="app"></div></main>
+<div id="layer"></div>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js" integrity="sha384-2zrRDgDHSYB/GN3nFW3fsZXoxEhKIr3N2h63Tc6DEOB9JJdFIu8xMJT2Cph/gBil" crossorigin="anonymous"></script>
+<script src="js/api.js"></script>
+<script src="js/common.js"></script>
+<script src="js/portal.js"></script>
+<script>
+const app = $('#app');
+$('#logo').innerHTML = LOGO + '<span>Segamat Kita <span class="muted small" style="font-family:var(--f-body);font-weight:600">Admin</span></span>';
+// Setiap jenis hantaran masuk satu bahagian sahaja
+const SECTIONS = {
+  info:   { label: 'Info',        icon: 'news',   desc: 'Berita, notis, event dan jawatan kosong',            kinds: ['post', 'job'],                 postTag: (t) => t !== 'Lapar Ek?' },
+  lapar:  { label: 'Lapar Ek?',   icon: 'bowl',   desc: 'Permohonan partner, kemas kini kedai, menu baru, kemas kini menu dan promo', kinds: ['shop', 'shopEdit', 'menu', 'menuEdit', 'post'], postTag: (t) => t === 'Lapar Ek?' },
+  market: { label: 'Marketplace', icon: 'market', desc: 'Permohonan Partner Marketplace, listing dan lencana Disahkan', kinds: ['provider', 'listing', 'verify'] }
+};
+const KIND_LABEL = { post: 'Info', job: 'Jawatan kosong', shop: 'Permohonan Partner Lapar Ek?', shopEdit: 'Kemas kini kedai', menu: 'Menu baru', menuEdit: 'Kemas kini menu', provider: 'Permohonan Partner Marketplace', listing: 'Listing Marketplace', verify: 'Lencana Disahkan' };
+// Jenis permohonan dalam dashboard Lapar Ek?
+const LAPAR_TYPES = [
+  ['shop', 'Partner baru', 'store', 'Permohonan jadi Partner Lapar Ek?. Selepas diluluskan, dashboard kedai dibuka dan menu yang mereka tambah masuk ke "Menu baru".'],
+  ['shopEdit', 'Kemas kini kedai', 'edit', 'Perubahan nama, alamat, telefon, waktu operasi atau QR DuitNow. Maklumat lama dipaparkan sehingga anda luluskan.'],
+  ['menu', 'Menu baru', 'bowl', 'Menu baru dari kedai yang sudah aktif. Belum dipaparkan kepada pelanggan.'],
+  ['menuEdit', 'Kemas kini menu', 'edit', 'Perubahan harga, nama, gambar atau pilihan menu. Versi lama dipaparkan sehingga anda luluskan.'],
+  ['post', 'Promo Lapar Ek?', 'news', 'Post promo Lapar Ek? untuk bahagian Info.']
+];
+const SHOP_LABEL = { name: 'Nama kedai', area: 'Kawasan', cuisine: 'Jenis makanan', hours: 'Waktu operasi', phone: 'WhatsApp', description: 'Penerangan', address: 'Alamat', duitnow_url: 'QR DuitNow' };
+const ITEM_LABEL = { name: 'Nama menu', price: 'Harga', category: 'Kategori', description: 'Penerangan', image_url: 'Gambar', options: 'Pilihan tambahan' };
+let sec = 'info', group = 'menunggu', ITEMS = [], COUNTS = {}, STATS = null, rejecting = null, lk = 'semua';
+
+async function init() {
+  app.innerHTML = loading();
+  await initAuth();
+  if (!Auth.user) {
+    $('#headActions').innerHTML = '';
+    app.innerHTML = `<div class="auth"><div class="stack" style="text-align:center;justify-items:center"><div class="thumb lg" style="--h:40">${ic('store', '')}</div><h1 style="font-size:30px">Panel admin</h1><p class="muted">Log masuk dengan akaun Google admin.</p></div>
+      <div class="card">${googleBtn('Teruskan dengan Google')}</div>${api.mode === 'demo' ? '<div class="note-box small"><b>Mod demo:</b> pilih <b>Admin Demo</b>.</div>' : ''}</div>`;
+    return;
+  }
+  $('#headActions').innerHTML = `<button class="iconbtn" id="logout" aria-label="Log keluar" title="Log keluar">${ic('logout')}</button>`;
+  if (!Auth.admin) {
+    app.innerHTML = `<div class="auth"><div class="card" style="text-align:center;justify-items:center;gap:10px"><div class="thumb lg" style="--h:8">${ic('alert', '')}</div><h2>Tiada akses</h2>
+      <p class="muted">Halaman ini hanya untuk pentadbir Segamat Kita.</p><a class="btn" href="index.html">Ke Segamat Kita</a></div></div>`;
+    return;
+  }
+  await load();
+}
+document.addEventListener('auth-changed', init);
+let loadSeq = 0;
+async function load() {
+  const my = ++loadSeq, mySec = sec, myGroup = group; // abaikan hasil lama jika admin sudah tukar bahagian
+  app.innerHTML = loading();
+  try {
+    const counts = await api.adminCounts();
+    const S = SECTIONS[mySec];
+    const lists = await Promise.all(S.kinds.map(k => api.adminList(k, myGroup).then(rows => rows.filter(r => k !== 'post' || S.postTag(r.tag)).map(r => ({ ...r, _kind: k })))));
+    const stats = mySec === 'lapar' ? await api.adminLaparStats() : null;
+    if (my !== loadSeq) return;
+    COUNTS = counts; STATS = stats;
+    ITEMS = lists.flat().sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+    render();
+  } catch (e) { app.innerHTML = emptyState('alert', esc(e.message)); }
+}
+const laparCount = (k) => (k === 'post' ? COUNTS.postLapar : COUNTS[k]) || 0;
+const waitIn = (k) => k === 'info' ? (COUNTS.postInfo || 0) + (COUNTS.job || 0) : k === 'lapar' ? LAPAR_TYPES.reduce((a, [t]) => a + laparCount(t), 0) : (COUNTS.provider || 0) + (COUNTS.listing || 0) + (COUNTS.verify || 0);
+function render() {
+  const S = SECTIONS[sec], n = waitIn(sec);
+  document.title = (Object.keys(SECTIONS).reduce((a, k) => a + waitIn(k), 0) ? `(${Object.keys(SECTIONS).reduce((a, k) => a + waitIn(k), 0)}) ` : '') + 'Panel Admin · Segamat Kita';
+  app.innerHTML = `<div class="stack"><p class="eyebrow">Panel admin</p><h1>Semakan hantaran</h1><p class="muted">Semua kandungan dari pengguna dan peniaga hanya dipaparkan selepas anda luluskan.</p></div>
+  <section class="block">
+    <div class="admin-secs">${Object.entries(SECTIONS).map(([k, x]) => { const c = waitIn(k); return `<button class="admin-sec ${sec === k ? 'on' : ''}" data-sec="${k}">${ic(x.icon)}<span class="stack" style="gap:0;text-align:left;min-width:0"><b>${x.label}</b><span class="small muted">${c ? c + ' menunggu' : 'Tiada yang menunggu'}</span></span>${c ? `<span class="badge">${c}</span>` : ''}</button>`; }).join('')}</div>
+    <p class="small muted">${S.desc}</p>
+    <div class="seg" style="max-width:420px"><button class="${group === 'menunggu' ? 'on' : ''}" data-group="menunggu">Menunggu${n ? ` <span class="badge">${n}</span>` : ''}</button><button class="${group === 'selesai' ? 'on' : ''}" data-group="selesai">Selesai</button></div>
+    ${sec === 'lapar' && group === 'menunggu' ? laparDash()
+      : ITEMS.length ? `<div class="grid g2">${ITEMS.map(card).join('')}</div>` : emptyState('check', group === 'menunggu' ? `Tiada hantaran ${S.label} menunggu.` : `Belum ada hantaran ${S.label} yang disemak.`)}
+  </section>`;
+}
+// Dashboard Lapar Ek?: ringkasan semua permohonan yang menunggu, ikut jenis
+function laparDash() {
+  const types = LAPAR_TYPES.filter(([k]) => lk === 'semua' || lk === k);
+  const groups = types.map(([k, label, icon, desc]) => {
+    const rows = ITEMS.filter(r => r._kind === k);
+    if (!rows.length) return lk === k ? emptyState('check', `Tiada ${label.toLowerCase()} menunggu.`) : '';
+    // Menu dikumpul ikut kedai supaya mudah luluskan sekali gus
+    const body = (k === 'menu' || k === 'menuEdit')
+      ? Object.values(rows.reduce((a, r) => { (a[r.shop_id] = a[r.shop_id] || []).push(r); return a; }, {})).map(list => `<div class="lk-shop">
+          <div class="row between"><b>${ic('store')} ${esc(list[0].shop?.name)} <span class="small muted">· ${list.length} ${k === 'menu' ? 'menu baru' : 'perubahan'}</span></b>
+          ${list.length > 1 ? `<button class="btn pri sm" data-bulk="${esc(list[0].shop_id)}" data-kind="${k}">${ic('check')}Luluskan semua (${list.length})</button>` : ''}</div>
+          <div class="grid g2">${list.map(card).join('')}</div></div>`).join('')
+      : `<div class="grid g2">${rows.map(card).join('')}</div>`;
+    return `<div class="lk-group"><div class="stack" style="gap:2px"><h2 style="font-size:20px">${ic(icon)} ${label} <span class="badge">${rows.length}</span></h2><p class="small muted">${desc}</p></div>${body}</div>`;
+  }).join('');
+  const total = LAPAR_TYPES.reduce((a, [k]) => a + laparCount(k), 0);
+  return `<div class="lk-grid">${LAPAR_TYPES.map(([k, label, icon]) => { const c = laparCount(k); return `<button class="lk-tile ${c ? 'has' : ''} ${lk === k ? 'on' : ''}" data-lk="${k}" aria-pressed="${lk === k}">${ic(icon)}<b>${c}</b><span>${label}</span></button>`; }).join('')}</div>
+    <div class="row between"><span class="small muted">${STATS ? `${ic('store')} ${STATS.live} kedai aktif · ${STATS.open} sedang terima order` : ''}</span>${lk !== 'semua' ? `<button class="btn sm ghost" data-lk="semua">Tunjuk semua jenis</button>` : ''}</div>
+    ${total || lk !== 'semua' ? groups : emptyState('check', 'Semua permohonan Lapar Ek? sudah disemak. Tiada yang menunggu.')}`;
+}
+const blank = '<i class="muted">kosong</i>';
+function fmtVal(k, v) {
+  if (v === null || v === undefined || v === '' || (Array.isArray(v) && !v.length)) return blank;
+  if (k === 'price') return rm(v);
+  if (k === 'duitnow_url' || k === 'image_url') return safeUrl(v) ? `<a href="${esc(safeUrl(v))}" target="_blank" rel="noopener"><img src="${esc(safeUrl(v))}" alt=""></a>` : '<b style="color:var(--bad)">Pautan tidak sah (disekat). Tolak permohonan ini.</b>';
+  if (k === 'options') return v.map(g => `${esc(g.name)}${g.required ? ' (wajib)' : ''}: ${g.choices.map(c => esc(c.name) + (Number(c.price) ? ' +' + rm(c.price) : '')).join(', ')}`).join('<br>');
+  return esc(v);
+}
+// Senarai medan yang berubah: nilai sekarang (dicoret) → nilai baru
+function diff(r, labels) {
+  const keys = Object.keys(labels).filter(k => k in r.pending && JSON.stringify(r.pending[k] ?? null) !== JSON.stringify(r[k] ?? null));
+  if (!keys.length) return '<span class="small muted">Tiada perbezaan dengan maklumat sekarang.</span>';
+  return `<div class="diff">${keys.map(k => `<div class="diff-row"><span class="small muted">${labels[k]}</span><div class="diff-old">${fmtVal(k, r[k])}</div><div class="diff-new">→ ${fmtVal(k, r.pending[k])}</div></div>`).join('')}</div>`;
+}
+function card(r) {
+  const k = r._kind;
+  let body = '';
+  if (k === 'post') body = `${r.image_url ? `<img class="post-img" src="${esc(safeUrl(r.image_url))}" alt="">` : ''}<h3>${esc(r.title)}</h3><p class="small muted" style="white-space:pre-line">${esc(r.body)}</p><span class="small">${ic('pin')} ${esc(r.area)}${r.author_name ? ' · ' + esc(r.author_name) : ''}</span>`;
+  if (k === 'job') body = `<h3>${esc(r.title)}</h3><p class="small muted">${esc(r.employer)} · ${esc(r.job_type)} · ${esc(r.pay)}${esc(r.pay_unit)} · tutup ${esc(r.close_date)}<br>${esc(r.req)}</p><span class="small">${ic('pin')} ${esc(r.area)} · WhatsApp <span class="num">${esc(r.phone)}</span></span>`;
+  if (k === 'shop') body = `<h3>${esc(r.name)}</h3><p class="small muted">${esc(r.cuisine)} · ${esc(r.area)}<br>${esc(r.address || 'Alamat tidak diisi')} · ${esc(r.hours)}</p><span class="small">WhatsApp <a class="num" href="${wa(r.phone, 'Salam, saya admin Segamat Kita tentang permohonan Partner Lapar Ek? untuk ' + r.name)}" target="_blank" rel="noopener">${esc(r.phone)}</a></span>
+    <span class="small muted">Semak: hubungi pemilik dan pastikan kedai wujud.</span>`;
+  const shopLink = (s) => `<span class="small">${ic('store')} <a href="lapar.html?k=${esc(s?.slug)}" target="_blank" rel="noopener">${esc(s?.name)}</a></span>`;
+  if (k === 'shopEdit') body = `<h3>${esc(r.name)}</h3><span class="small muted">Peniaga mahu tukar:</span>${diff(r, SHOP_LABEL)}<span class="small">WhatsApp kedai sekarang <span class="num">${esc(r.phone)}</span> · <a href="lapar.html?k=${esc(r.slug)}" target="_blank" rel="noopener">Lihat page kedai</a></span>`;
+  if (k === 'menu') body = `${r.image_url ? `<img class="menu-img" src="${esc(safeUrl(r.image_url))}" alt="">` : ''}<div class="row between nowrap"><h3>${esc(r.name)}</h3><b class="num">${rm(r.price)}</b></div>
+    <p class="small muted">${esc(r.category)}${r.description ? ' · ' + esc(r.description) : ''}</p>${r.options?.length ? `<span class="small">${fmtVal('options', r.options)}</span>` : ''}${shopLink(r.shop)}`;
+  if (k === 'menuEdit') body = `<h3>${esc(r.name)}</h3><span class="small muted">Sekarang ${rm(r.price)} · ${esc(r.category)}</span>${diff(r, ITEM_LABEL)}${shopLink(r.shop)}`;
+  if (k === 'provider') body = `<h3>${esc(r.name)}</h3><p class="small muted">${esc(r.role)} · ${esc(r.area)}<br>${esc(r.about)}</p><span class="small">WhatsApp <span class="num">${esc(r.phone)}</span></span><span class="small muted">Semak: hubungi penyedia dan pastikan servis wujud.</span>`;
+  if (k === 'listing') body = `<h3>${esc(r.title)}</h3><p class="small muted">${esc(r.provider?.name)} (${esc(r.provider?.role)}) · ${esc(r.cat)} · ${esc(r.price)}${esc(r.unit)}<br>${esc(r.descr)}${r.inc?.length ? '<br>Termasuk: ' + r.inc.map(esc).join(', ') : ''}</p>`;
+  if (k === 'verify') body = `<h3>${esc(r.provider?.name)}</h3><p class="small muted">${esc(r.provider?.role)} · ${esc(r.provider?.area)}${r.note ? '<br>Nota: ' + esc(r.note) : ''}</p>
+    ${r._docUrls?.length ? `<div class="row docs" style="gap:8px">${r._docUrls.map(u => `<a href="${esc(safeUrl(u))}" target="_blank" rel="noopener"><img src="${esc(safeUrl(u))}" alt="Dokumen"></a>`).join('')}</div>` : '<span class="small muted">Dokumen telah dipadam selepas semakan.</span>'}
+    <span class="small">WhatsApp <span class="num">${esc(r.provider?.phone)}</span></span>`;
+  const isEdit = k === 'shopEdit' || k === 'menuEdit', waiting = isEdit || r.status === 'menunggu';
+  const okLabel = k === 'shop' || k === 'provider' ? 'Luluskan partner' : isEdit ? 'Luluskan perubahan' : 'Luluskan';
+  const actions = !waiting ? '' : rejecting === r.id
+    ? `<div class="stack"><input class="input" id="rejReason" maxlength="200" placeholder="Sebab ditolak (dilihat oleh pemohon)"><div class="row"><button class="btn danger sm" data-reject="${r.id}" data-kind="${k}">Sahkan tolak</button><button class="btn sm" data-cancel>Batal</button></div></div>`
+    : `<div class="row"><button class="btn pri sm" data-approve="${r.id}" data-kind="${k}">${ic('check')}${okLabel}</button><button class="btn danger sm" data-ask="${r.id}">Tolak</button></div>`;
+  return `<div class="card" style="${['shop', 'provider'].includes(k) ? 'border-color:var(--brand)' : k === 'verify' ? 'border-color:var(--accent)' : ''}">
+    <div class="row between"><span class="pill ${k === 'shop' || k === 'provider' ? 'ok' : k === 'verify' ? 'acc' : ''}">${k === 'post' ? esc(r.tag) : KIND_LABEL[k]}</span>${isEdit ? '<span class="pill warn">Menunggu kelulusan</span>' : statusPill(r.status)}</div>
+    ${body}
+    <span class="small muted">Akaun: ${esc(r._email || '-')} · ${ago(r.created_at)}</span>
+    ${r.status === 'tolak' && r.reason ? `<span class="small" style="color:var(--bad)">Sebab ditolak: ${esc(r.reason)}</span>` : ''}
+    ${actions}</div>`;
+}
+document.addEventListener('click', async (e) => {
+  const t = e.target;
+  if (t.closest('#logout')) { await api.signOut(); location.reload(); return; }
+  const s = t.closest('[data-sec]'); if (s) { sec = s.dataset.sec; group = 'menunggu'; rejecting = null; lk = 'semua'; load(); return; }
+  const l = t.closest('[data-lk]'); if (l) { lk = lk === l.dataset.lk ? 'semua' : l.dataset.lk; rejecting = null; render(); return; }
+  const bk = t.closest('[data-bulk]');
+  if (bk) {
+    const list = ITEMS.filter(r => r._kind === bk.dataset.kind && r.shop_id === bk.dataset.bulk); bk.disabled = true;
+    try { for (const r of list) await api.adminDecide(r._kind, r.id, true, null); toast(`${list.length} menu diluluskan`); }
+    catch (er) { toast(er.message, 'err'); }
+    await load(); return;
+  }
+  const g = t.closest('[data-group]'); if (g) { group = g.dataset.group; rejecting = null; load(); return; }
+  const ask = t.closest('[data-ask]'); if (ask) { rejecting = ask.dataset.ask; render(); setTimeout(() => $('#rejReason')?.focus(), 30); return; }
+  if (t.closest('[data-cancel]')) { rejecting = null; render(); return; }
+  const ap = t.closest('[data-approve]'), rj = t.closest('[data-reject]');
+  if (ap || rj) {
+    const b = ap || rj; b.disabled = true;
+    try {
+      await api.adminDecide(b.dataset.kind, ap ? ap.dataset.approve : rj.dataset.reject, !!ap, rj ? ($('#rejReason')?.value || '').trim() : null);
+      rejecting = null; toast(ap ? 'Diluluskan dan kini dipaparkan' : 'Hantaran ditolak'); await load();
+    } catch (er) { b.disabled = false; toast(er.message, 'err'); }
+  }
+});
+
+if (demoBanner()) init();
+</script>
+</body>
+</html>
+<script async src="/.netlify/scripts/hud?variant=public" data-nf-variant="public" data-netlify-site-id="1b819d4e-6353-48d8-8790-399d1727896c" data-app-host="app.netlify.com" data-account-tier="free"></script>

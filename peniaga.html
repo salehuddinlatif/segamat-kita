@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<!-- This site is hosted on Netlify. Anyone can build and deploy a site
+     like this one for free: https://netlify.new/?utm_campaign=loops&utm_source=ai-legible&utm_medium=owned&utm_content=comment&utm_id=1b819d4e-6353-48d8-8790-399d1727896c
+     Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e5846">
+<title>Dashboard Peniaga · Lapar Ek?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="css/ui.css">
+<link rel="stylesheet" href="css/portal.css">
+<style>
+.auth{max-width:440px;margin:4vh auto 0;display:grid;gap:16px}
+.auth .card{padding:22px;gap:14px}
+.dash-head{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.dash-tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none;margin-top:14px}
+.dash-tabs::-webkit-scrollbar{display:none}
+.dash-tabs button{border:0;background:transparent;padding:11px 12px;font-weight:800;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.dash-tabs button svg{width:18px;height:18px}
+.dash-tabs button.on{color:var(--ink);border-color:var(--brand)}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media (min-width:700px){.kpis{grid-template-columns:repeat(4,1fr)}}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:grid;gap:2px;min-width:0}
+.kpi b{font-family:var(--f-display);font-size:24px;font-variant-numeric:tabular-nums;line-height:1.15}
+.order{border-left:5px solid var(--line)}
+.order.st-baru{border-left-color:var(--bad);animation:ring 1.6s ease-out 3}
+.order.st-diterima{border-left-color:var(--warn)}
+.order.st-siap{border-left-color:var(--ok)}
+@keyframes ring{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--bad) 45%,transparent)}100%{box-shadow:0 0 0 12px transparent}}
+.order .lines{display:grid;gap:4px;font-size:15px}
+.ord-no{font-family:var(--f-display);font-size:24px;font-weight:800}
+.chart-wrap{overflow-x:auto}
+.chart{display:flex;align-items:flex-end;gap:6px;height:190px;padding-top:22px;min-width:100%}
+.chart .col{flex:1 0 22px;display:grid;grid-template-rows:1fr auto;gap:6px;height:100%;text-align:center}
+.chart .bar{align-self:end;background:var(--brand);border-radius:6px 6px 2px 2px;position:relative;min-height:2px}
+.chart .bar span{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);font-size:10px;font-weight:700;white-space:nowrap;color:var(--muted);padding-bottom:3px}
+.chart .lbl{font-size:10px;color:var(--muted);white-space:nowrap}
+.hbar{display:grid;gap:4px}
+.hbar .track{height:10px;border-radius:5px;background:var(--soft);overflow:hidden}
+.hbar .track i{display:block;height:100%;background:var(--brand);border-radius:5px}
+table.t{width:100%;border-collapse:collapse;font-size:14px}
+table.t th,table.t td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line)}
+table.t th{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+table.t td.n,table.t th.n{text-align:right;font-variant-numeric:tabular-nums}
+.optgroup{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;display:grid;gap:10px}
+.choice{display:grid;grid-template-columns:1fr 104px 38px;gap:8px;align-items:center}
+.imgprev{display:flex;gap:12px;align-items:center}
+/* tiket dapur 80mm & poster QR */
+@page{margin:6mm}
+#print .ticket{width:72mm;font-family:ui-monospace,Consolas,monospace;font-size:13px;line-height:1.35;color:#000}
+#print .ticket h1{font-size:16px;text-align:center;margin:0 0 2px;font-family:inherit}
+#print .ticket .big{font-size:26px;font-weight:800;text-align:center}
+#print .ticket .type{text-align:center;font-weight:800;font-size:16px;border:2px solid #000;padding:3px;margin:6px 0}
+#print .ticket hr{border:0;border-top:1px dashed #000;margin:6px 0}
+#print .ticket .ln{display:flex;justify-content:space-between;gap:8px}
+#print .ticket .opt{padding-left:18px;font-size:12px}
+#print .posters{display:grid;grid-template-columns:1fr 1fr;gap:8mm;font-family:Figtree,Arial,sans-serif;color:#000}
+#print .poster{border:2px solid #000;border-radius:6mm;padding:7mm;text-align:center;break-inside:avoid;display:grid;gap:3mm;justify-items:center}
+#print .poster.single{grid-column:1/-1;padding:14mm}
+#print .poster h2{font-size:22px;margin:0}
+#print .poster .meja{font-size:34px;font-weight:800;font-family:"Bricolage Grotesque",Arial,sans-serif}
+#print .poster .brand{font-size:12px}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="logo" href="./"><span class="mark" id="logoMark"></span><span>Lapar Ek? <span class="muted small" style="font-family:var(--f-body);font-weight:600">Peniaga</span></span></a>
+  <span class="spacer"></span>
+  <span id="headActions" class="row nowrap" style="gap:8px"></span>
+</div></header>
+<main><div class="wrap" id="app"></div></main>
+<div id="layer"></div>
+<div id="print"></div>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js" integrity="sha384-2zrRDgDHSYB/GN3nFW3fsZXoxEhKIr3N2h63Tc6DEOB9JJdFIu8xMJT2Cph/gBil" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" integrity="sha384-3zSEDfvllQohrq0PHL1fOXJuC/jSOO34H46t6UQfobFOmxE5BpjjaIJY5F2/bMnU" crossorigin="anonymous"></script>
+<script src="js/api.js"></script>
+<script src="js/common.js"></script>
+<script>
+const app = $('#app');
+$('#logoMark').innerHTML = ic('bowl');
+let USER = null, SHOP = null, MENU = [], ORDERS = [], tab = 'order', unsub = null, sound = false, confirmDel = null, EI = null, range = 'today', REPORT = null;
+const shopBase = () => new URL('./', location.href).href;
+const shopUrl = (meja) => shopBase() + 'lapar.html?k=' + SHOP.slug + (meja ? '&meja=' + encodeURIComponent(meja) : '');
+const busy = (btn, on, text) => { if (!btn) return; if (on) { btn.dataset.txt = btn.innerHTML; btn.disabled = true; btn.setAttribute('aria-busy', 'true'); btn.innerHTML = `<span class="spin"></span>${text || 'Menyimpan…'}`; } else { btn.disabled = false; btn.removeAttribute('aria-busy'); btn.innerHTML = btn.dataset.txt || btn.innerHTML; } };
+const typing = () => document.activeElement && document.activeElement.matches('input,textarea,select');
+
+/* ================= Mula ================= */
+async function init() {
+  app.innerHTML = loading();
+  try {
+    await initAuth();
+    USER = Auth.user;
+    if (!USER) return vAuth();
+    // Satu akaun untuk semua: sesiapa yang log masuk boleh mohon jadi partner.
+    // Dashboard hanya dibuka selepas permohonan diluluskan admin.
+    SHOP = Auth.shop;
+    if (!SHOP || SHOP.status !== 'lulus') return vSetup();
+    MENU = await api.getMenu(SHOP.id);
+    if (!MENU.length) tab = 'menu';
+    startOrders();
+    render();
+  } catch (e) { app.innerHTML = emptyState('alert', esc(e.message) + '<br><button class="btn sm" style="margin-top:8px" onclick="location.reload()">Cuba lagi</button>'); }
+}
+
+/* ================= Log masuk / daftar ================= */
+// Log masuk Google sahaja (email mesti disahkan)
+function vAuth() {
+  $('#headActions').innerHTML = '';
+  app.innerHTML = `<div class="auth">
+    <div class="stack" style="text-align:center;justify-items:center"><div class="thumb lg" style="--h:30">${ic('bowl', '')}</div><h1 style="font-size:30px">Partner Lapar Ek?</h1>
+    <p class="muted">Log masuk dengan akaun Google untuk mohon jadi partner atau buka dashboard kedai. Selepas diluluskan: page menu sendiri, QR code dan order dine-in & pickup.</p></div>
+    <div class="card">${googleBtn('Teruskan dengan Google')}<p class="small muted" style="text-align:center">Hanya akaun Google dengan email yang disahkan boleh log masuk.</p></div>
+    ${api.mode === 'demo' ? `<div class="note-box small"><b>Mod demo:</b> pilih <b>Mak Teh (kedai contoh)</b> untuk urus Warung Mak Teh, atau <b>Pengguna Demo</b> untuk cuba daftar kedai baru.</div>` : ''}
+    <a class="btn ghost sm" href="index.html" style="justify-self:center">${ic('back')}Ke Segamat Kita</a>
+  </div>`;
+}
+document.addEventListener('auth-changed', () => { unsub && unsub(); init(); });
+function statusBanner() {
+  if (SHOP.pending) return `<div class="banner-note wait" style="margin-top:14px"><b>Perubahan maklumat kedai menunggu kelulusan admin</b><span class="small">Pelanggan masih nampak maklumat lama sehingga diluluskan. <button class="btn sm ghost" data-cancelshop style="margin-left:4px">Batalkan permohonan</button></span></div>`;
+  if (SHOP.pending_reason) return `<div class="banner-note no" style="margin-top:14px"><b>Perubahan maklumat kedai tidak diluluskan</b><span class="small">${esc(SHOP.pending_reason)}</span></div>`;
+  return '';
+}
+
+/* ================= Permohonan Partner Lapar Ek? ================= */
+// Borang permohonan baru, atau status permohonan yang sedang disemak / ditolak
+let slugTouched = false;
+function vSetup() {
+  headActions();
+  const s = SHOP, v = (k) => esc(s?.[k] || '');
+  const head = !s
+    ? `<p class="eyebrow">Partner Lapar Ek?</p><h1 style="font-size:30px">Mohon jadi Partner Lapar Ek?</h1>
+       <p class="muted">Akaun pengguna adalah percuma. Untuk terima order melalui Lapar Ek?, kedai anda perlu diluluskan oleh admin. Selepas diluluskan, dashboard untuk menu, order dan QR meja akan dibuka.</p>`
+    : s.status === 'tolak'
+    ? `<div class="banner-note no"><b>Permohonan ditolak</b><span class="small">${esc(s.reason || 'Sila hubungi admin Segamat Kita.')}</span></div>
+       <h1 style="font-size:28px">Betulkan dan hantar semula</h1><p class="muted">Kemas kini maklumat di bawah. Admin akan semak semula permohonan anda.</p>`
+    : `<div class="banner-note wait"><b>Permohonan sedang disemak</b><span class="small">Admin akan semak kedai anda, mungkin dengan menghubungi anda melalui WhatsApp. Dashboard akan dibuka selepas diluluskan.</span></div>
+       <h1 style="font-size:28px">Permohonan Partner Lapar Ek?</h1><p class="muted">Dihantar pada ${fmtDate(s.created_at)}. Anda masih boleh betulkan maklumat di bawah.</p>
+       <button type="button" class="btn sm" id="recheck" style="justify-self:start">Semak status</button>`;
+  app.innerHTML = `<div class="auth" style="max-width:600px">
+    <div class="stack">${head}</div>
+    <form class="card" id="setupForm" novalidate>
+      <div class="field"><label for="sName">Nama kedai</label><input class="input" id="sName" required maxlength="80" value="${v('name')}" placeholder="Contoh: Warung Mak Teh"></div>
+      ${s ? `<div class="field"><span class="flabel">Pautan kedai</span><code style="word-break:break-all;padding:8px 10px">${esc(shopBase())}lapar.html?k=${v('slug')}</code></div>`
+        : `<div class="field"><label for="sSlug">Pautan kedai</label><input class="input" id="sSlug" required maxlength="40" placeholder="warung-mak-teh">
+        <span class="hint">Pautan anda: <b id="slugPrev" style="word-break:break-all">${esc(shopBase())}?k=…</b> · tidak boleh ditukar selepas dihantar</span></div>`}
+      <div class="frow two"><div class="field"><label for="sArea">Kawasan</label><select class="input" id="sArea">${C.AREAS.map(a => `<option ${s?.area === a ? 'selected' : ''}>${esc(a)}</option>`).join('')}</select></div>
+      <div class="field"><label for="sCuisine">Jenis makanan</label><input class="input" id="sCuisine" maxlength="60" value="${v('cuisine')}" placeholder="Contoh: Nasi lemak & lauk kampung"></div></div>
+      <div class="frow two"><div class="field"><label for="sPhone">No. WhatsApp kedai</label><input class="input" id="sPhone" inputmode="tel" maxlength="20" value="${v('phone')}" placeholder="012-700 0001"></div>
+      <div class="field"><label for="sHours">Waktu operasi</label><input class="input" id="sHours" maxlength="60" value="${v('hours')}" placeholder="7:00 pagi – 3:00 petang"></div></div>
+      <div class="field"><label for="sAddr">Alamat kedai</label><input class="input" id="sAddr" maxlength="160" value="${v('address')}" placeholder="No., jalan, taman"></div>
+      ${s ? '' : `<label class="row nowrap small" style="gap:10px;align-items:flex-start"><input type="checkbox" id="sAgree" style="margin-top:3px">Saya mengesahkan maklumat ini benar dan bersetuju dengan Terma penggunaan Segamat Kita.</label>`}
+      <div id="setupErr"></div>
+      <button class="btn pri lg block" id="setupBtn">${!s ? 'Hantar permohonan' : s.status === 'tolak' ? 'Hantar semula permohonan' : 'Simpan perubahan'}</button>
+    </form></div>`;
+  slugTouched = false;
+}
+const normPhone = (p) => { let d = String(p || '').replace(/\D/g, ''); if (d.startsWith('0')) d = '6' + d; return d; };
+async function submitSetup() {
+  const btn = $('#setupBtn'), err = $('#setupErr'); err.innerHTML = '';
+  const fail = (m) => (err.innerHTML = `<div class="err">${ic('alert')}${esc(m)}</div>`);
+  const name = $('#sName').value.trim();
+  if (name.length < 2) return fail('Sila isi nama kedai.');
+  if (!normPhone($('#sPhone').value)) return fail('Sila isi nombor WhatsApp kedai.');
+  const d = { name, area: $('#sArea').value, cuisine: $('#sCuisine').value.trim(), phone: normPhone($('#sPhone').value), hours: $('#sHours').value.trim(), address: $('#sAddr').value.trim() };
+  try {
+    if (SHOP) { // betulkan permohonan sedia ada (yang ditolak dihantar semula)
+      const was = SHOP.status; busy(btn, true);
+      SHOP = await api.updateShop(SHOP.id, d); vSetup();
+      toast(was === 'tolak' && SHOP.status === 'menunggu' ? 'Permohonan dihantar semula' : 'Permohonan dikemas kini');
+      return;
+    }
+    const slug = slugify($('#sSlug').value);
+    if (!/^[a-z0-9-]{3,40}$/.test(slug)) return fail('Pautan kedai mesti 3–40 aksara: huruf kecil, nombor atau tanda sempang.');
+    if (!$('#sAgree').checked) return fail('Sila sahkan maklumat dan setuju dengan Terma penggunaan.');
+    busy(btn, true, 'Menghantar…');
+    if (await api.slugTaken(slug)) { busy(btn, false); return fail('Pautan "' + slug + '" sudah diambil. Cuba yang lain.'); }
+    SHOP = await api.createShop({ ...d, slug });
+    vSetup(); toast('Permohonan dihantar. Dashboard akan dibuka selepas diluluskan admin.');
+  } catch (e) { busy(btn, false); fail(e.message); }
+}
+
+/* ================= Dashboard ================= */
+function headActions() {
+  Auth.shop = SHOP; // ikon kedai di tepi profil ikut status terkini
+  $('#headActions').innerHTML = `${SHOP?.status === 'lulus' ? `<a class="btn sm" href="${esc(shopUrl())}" target="_blank" rel="noopener">${ic('ext')}<span class="hide-sm">Page kedai</span></a>` : ''}<button id="accountBtn"></button>`;
+  renderAccountBtn();
+}
+const activeOrders = () => ORDERS.filter(o => ['baru', 'diterima', 'siap'].includes(o.status));
+function render() {
+  headActions();
+  const nNew = ORDERS.filter(o => o.status === 'baru').length;
+  document.title = (nNew ? `(${nNew}) ` : '') + 'Dashboard · ' + SHOP.name;
+  const tabs = [['order', 'Order', 'receipt', nNew], ['menu', 'Menu', 'bowl'], ['laporan', 'Laporan', 'chart'], ['kedai', 'Kedai', 'store'], ['qr', 'QR', 'qr']];
+  app.innerHTML = `<div class="dash-head"><div class="row nowrap">${thumb(SHOP.name, { icon: foodIcon(SHOP.cuisine), cls: 'sm' })}<div class="stack" style="gap:0"><h1 style="font-size:clamp(20px,4.6vw,28px)">${esc(SHOP.name)}</h1><span class="small muted">${SHOP.is_open ? '<span style="color:var(--ok)">● Terima order</span>' : '<span>● Order ditutup</span>'} · ${esc(SHOP.area)}</span></div></div></div>
+  ${statusBanner()}
+  <div class="dash-tabs" role="tablist">${tabs.map(([k, l, i, b]) => `<button role="tab" aria-selected="${tab === k}" class="${tab === k ? 'on' : ''}" data-tab="${k}">${ic(i)}${l}${b ? `<span class="badge">${b}</span>` : ''}</button>`).join('')}</div>
+  <section class="block" style="margin-top:18px" id="tabBody"></section>`;
+  ({ order: tOrders, menu: tMenu, laporan: tReport, kedai: tShop, qr: tQR })[tab]();
+}
+
+/* ----- Order ----- */
+function startOrders() {
+  unsub && unsub();
+  loadOrders(false);
+  unsub = api.subscribeOrders(SHOP.id, (ev) => loadOrders(ev === 'INSERT'));
+}
+let titleFlash;
+async function loadOrders(isNew) {
+  try {
+    const since = new Date(Date.now() - 36 * 3600 * 1000).toISOString();
+    const prevIds = new Set(ORDERS.map(o => o.id));
+    ORDERS = await api.listOrders(SHOP.id, since);
+    const fresh = ORDERS.filter(o => o.status === 'baru' && !prevIds.has(o.id));
+    if (isNew && fresh.length && prevIds.size >= 0) {
+      if (sound) beep();
+      toast(`Order baru #${fresh[0].id} · ${fresh[0].order_type === 'dine' ? 'Meja ' + fresh[0].table_no : 'Pickup'}`);
+      clearInterval(titleFlash); let on = false;
+      titleFlash = setInterval(() => { document.title = (on = !on) ? '🔔 Order baru!' : 'Dashboard · ' + SHOP.name; }, 1000);
+      setTimeout(() => clearInterval(titleFlash), 12000);
+    }
+    if (tab === 'order' && !$('#layer').innerHTML && !typing()) render();
+    else { const b = $('[data-tab=order]'); if (b) { const n = ORDERS.filter(o => o.status === 'baru').length; b.innerHTML = ic('receipt') + 'Order' + (n ? `<span class="badge">${n}</span>` : ''); } }
+  } catch (e) { toast('Gagal muat order: ' + e.message, 'err'); }
+}
+setInterval(() => { if (SHOP && tab === 'order' && !$('#layer').innerHTML && !typing()) loadOrders(false); }, 30000);
+let actx;
+function beep() { try { actx = actx || new AudioContext(); actx.resume(); [0, .2, .4].forEach(t => { const o = actx.createOscillator(), g = actx.createGain(); o.frequency.value = t === .2 ? 1040 : 880; o.connect(g); g.connect(actx.destination); g.gain.setValueAtTime(.25, actx.currentTime + t); g.gain.exponentialRampToValueAtTime(.001, actx.currentTime + t + .16); o.start(actx.currentTime + t); o.stop(actx.currentTime + t + .18); }); } catch (e) {} }
+
+function tOrders() {
+  const today0 = new Date(); today0.setHours(0, 0, 0, 0);
+  const today = ORDERS.filter(o => new Date(o.created_at) >= today0 && o.status !== 'batal');
+  const pr = { baru: 0, diterima: 1, siap: 2 };
+  const active = activeOrders().sort((a, b) => pr[a.status] - pr[b.status] || new Date(a.created_at) - new Date(b.created_at));
+  const done = ORDERS.filter(o => ['selesai', 'batal'].includes(o.status) && new Date(o.created_at) >= today0).slice(0, 20);
+  $('#tabBody').innerHTML = `<div class="card" style="padding:12px 14px"><div class="row between">
+    <label class="row nowrap" style="gap:12px;cursor:pointer"><span class="toggle"><input type="checkbox" id="openToggle" ${SHOP.is_open ? 'checked' : ''}><span></span></span><span class="stack" style="gap:0"><b>${SHOP.is_open ? 'Terima order online' : 'Order online ditutup'}</b><span class="small muted">${SHOP.is_open ? 'Pelanggan boleh order sekarang' : 'Pelanggan hanya boleh lihat menu'}</span></span></label>
+    <button class="btn sm ${sound ? 'pri' : 'acc'}" id="soundBtn">${ic('bell')}${sound ? 'Bunyi: hidup' : 'Hidupkan bunyi order'}</button></div>
+    ${sound ? '' : '<span class="small muted">Tekan butang bunyi supaya telefon berbunyi bila order baru masuk. Biarkan page ini terbuka.</span>'}</div>
+  <div class="kpis"><div class="kpi"><span class="small muted">Order baru</span><b style="color:${active.some(o => o.status === 'baru') ? 'var(--bad)' : 'inherit'}">${ORDERS.filter(o => o.status === 'baru').length}</b></div>
+   <div class="kpi"><span class="small muted">Disediakan</span><b>${ORDERS.filter(o => o.status === 'diterima').length}</b></div>
+   <div class="kpi"><span class="small muted">Order hari ini</span><b>${today.length}</b></div>
+   <div class="kpi"><span class="small muted">Jualan hari ini</span><b>${rm(today.reduce((a, o) => a + Number(o.total), 0))}</b></div></div>
+  <div class="sec-head"><h2>Order aktif</h2><span class="small muted">Order baru keluar sendiri</span></div>
+  <div class="grid g2">${active.map(orderCard).join('') || emptyState('receipt', `Tiada order aktif. Cuba order dari <a href="${esc(shopUrl())}" target="_blank" rel="noopener">page kedai anda</a> untuk lihat ia masuk ke sini.`)}</div>
+  ${done.length ? `<h2>Selesai hari ini</h2><div class="list">${done.map(o => `<div class="item"><div class="body"><div class="row between"><b>#${o.id} · ${esc(o.customer_name)}</b><span class="pill ${o.status === 'batal' ? 'bad' : 'ok'}">${STATUS[o.status]}</span></div><span class="small muted">${fmtTime(o.created_at)} · ${rm(o.total)} · ${o.items.reduce((a, i) => a + i.qty, 0)} item · ${o.order_type === 'dine' ? 'Meja ' + esc(o.table_no) : 'Pickup'}</span></div><button class="btn sm ghost" data-print="${o.id}" aria-label="Cetak">${ic('print')}</button></div>`).join('')}</div>` : ''}`;
+}
+const NEXT = { baru: 'diterima', diterima: 'siap', siap: 'selesai' };
+const NEXT_LABEL = { baru: 'Terima order', diterima: 'Tanda siap', siap: 'Selesai' };
+function orderCard(o) {
+  const n = mins(o.created_at), late = n >= Math.max(15, SHOP.prep_min + 5) && ['baru', 'diterima'].includes(o.status);
+  return `<div class="card order st-${o.status}">
+   <div class="row between"><span class="ord-no num">#${o.id}</span><div class="row" style="gap:6px">${late ? '<span class="pill bad">Lewat</span>' : ''}<span class="pill ${o.status === 'baru' ? 'bad' : o.status === 'siap' ? 'ok' : 'warn'}">${STATUS[o.status]}</span></div></div>
+   <div class="row small"><span class="pill acc">${o.order_type === 'dine' ? ic('dine') + 'Meja ' + esc(o.table_no) : ic('bagup') + 'Pickup · ' + esc(o.pickup_time || '')}</span><span class="muted num">${ic('clock')} ${n < 1 ? 'baru tadi' : n + ' min lalu'} · ${fmtTime(o.created_at)}</span></div>
+   <div class="lines">${o.items.map(i => `<div class="row between nowrap" style="align-items:flex-start"><div style="min-width:0"><b class="num">${i.qty}×</b> ${esc(i.name)}${i.options?.length ? `<div class="small muted">${esc(i.options.join(', '))}</div>` : ''}${i.note ? `<div class="small" style="color:var(--warn)">“${esc(i.note)}”</div>` : ''}</div><span class="num muted small">${rm(i.qty * i.unit)}</span></div>`).join('')}</div>
+   ${o.note ? `<div class="small" style="background:var(--warn-bg);color:var(--warn);padding:7px 10px;border-radius:10px"><b>Nota:</b> ${esc(o.note)}</div>` : ''}
+   <div class="row between"><span class="small">${esc(o.customer_name)}${o.customer_phone ? ` · <a href="${wa(normPhone(o.customer_phone), 'Salam ' + o.customer_name + ', tentang order #' + o.id + ' di ' + SHOP.name)}" target="_blank" rel="noopener">${esc(o.customer_phone)}</a>` : ''}</span><b class="num">${rm(o.total)} <span class="small muted" style="font-weight:600">${PAY[o.pay_method]}</span></b></div>
+   <div class="row">${NEXT[o.status] ? `<button class="btn pri" style="flex:1" data-st="${NEXT[o.status]}" data-id="${o.id}">${ic('check')}${NEXT_LABEL[o.status]}</button>` : ''}
+   <button class="btn" data-print="${o.id}" aria-label="Cetak tiket">${ic('print')}<span class="hide-sm">Cetak</span></button>
+   ${o.status === 'baru' ? `<button class="btn danger" data-st="batal" data-id="${o.id}">Tolak</button>` : ''}</div></div>`;
+}
+async function setStatus(id, st, btn) {
+  const o = ORDERS.find(x => x.id == id); if (!o) return;
+  const prev = o.status; o.status = st; render();
+  try { await api.setOrderStatus(o.id, st); toast(st === 'batal' ? `Order #${o.id} ditolak` : `Order #${o.id}: ${STATUS[st]}`); }
+  catch (e) { o.status = prev; render(); toast(e.message, 'err'); }
+}
+function printTicket(id) {
+  const o = ORDERS.find(x => x.id == id) || (REPORT && REPORT.find(x => x.id == id)); if (!o) return;
+  $('#print').innerHTML = `<div class="ticket"><h1>${esc(SHOP.name)}</h1><div class="big">#${o.id}</div>
+    <div class="type">${o.order_type === 'dine' ? 'DINE-IN · MEJA ' + esc(o.table_no) : 'PICKUP · ' + esc(o.pickup_time || '')}</div>
+    <div class="ln"><span>${fmtDate(o.created_at)} ${fmtTime(o.created_at)}</span><span>${PAY[o.pay_method]}</span></div><hr>
+    ${o.items.map(i => `<div class="ln"><b>${i.qty} x ${esc(i.name)}</b><span>${Number(i.qty * i.unit).toFixed(2)}</span></div>${i.options?.length ? `<div class="opt">+ ${esc(i.options.join(', '))}</div>` : ''}${i.note ? `<div class="opt">» ${esc(i.note)}</div>` : ''}`).join('')}
+    <hr><div class="ln"><b>JUMLAH</b><b>RM ${Number(o.total).toFixed(2)}</b></div><hr>
+    <div>Nama: ${esc(o.customer_name)}</div>${o.customer_phone ? `<div>Tel: ${esc(o.customer_phone)}</div>` : ''}${o.note ? `<div>Nota: ${esc(o.note)}</div>` : ''}
+    <hr><div style="text-align:center;font-size:11px">Lapar Ek? · Terima kasih</div></div>`;
+  window.print();
+}
+
+/* ----- Menu ----- */
+function tMenu() {
+  const cats = [...new Set(MENU.map(x => x.category))];
+  const nWait = MENU.filter(x => x.status === 'menunggu' || x.pending).length;
+  $('#tabBody').innerHTML = `<div class="row between"><p class="muted">${MENU.length} item · ${MENU.filter(x => !x.available).length} habis${nWait ? ` · <span style="color:var(--warn)">${nWait} menunggu kelulusan</span>` : ''}</p>
+    <div class="row"><a class="btn sm" href="${esc(shopUrl())}" target="_blank" rel="noopener">${ic('ext')}Lihat seperti pelanggan</a><button class="btn pri sm" id="addItem">${ic('plus')}Tambah menu</button></div></div>
+  ${SHOP.status === 'lulus' && MENU.length ? '<p class="small muted">Menu baru dan perubahan menu (nama, harga, gambar, pilihan) disemak oleh admin dahulu. Tanda Ada/Habis berubah serta-merta.</p>' : ''}
+  ${MENU.length ? cats.map(c => `<div class="stack" style="gap:10px;margin-top:10px"><h3 class="eyebrow" style="font-size:13px">${esc(c)}</h3><div class="list">${MENU.filter(x => x.category === c).map(x => `<div class="item">
+    ${thumb(x.name, { img: x.image_url, icon: foodIcon(x.name, x.category) })}<div class="body">
+    <div class="row between nowrap"><b>${esc(x.name)}${x.is_hot ? ` <span style="color:var(--warn);display:inline-flex;vertical-align:-4px">${ic('fire')}</span>` : ''}</b><span class="price num" style="font-size:16px">${rm(x.price)}</span></div>
+    ${x.description ? `<span class="small muted clamp">${esc(x.description)}</span>` : ''}
+    ${(x.options || []).length ? `<span class="small muted">Pilihan: ${x.options.map(g => esc(g.name)).join(', ')}</span>` : ''}
+    ${itemReview(x)}
+    <div class="row between" style="margin-top:6px"><label class="row nowrap small" style="gap:8px;cursor:pointer"><span class="toggle"><input type="checkbox" data-avail="${x.id}" ${x.available ? 'checked' : ''} aria-label="${esc(x.name)} ada stok"><span></span></span><b style="color:${x.available ? 'var(--ok)' : 'var(--muted)'}">${x.available ? 'Ada' : 'Habis'}</b></label>
+    <div class="row" style="gap:6px">${confirmDel === x.id
+      ? `<span class="small">Padam?</span><button class="btn sm danger" data-del="${x.id}">Ya, padam</button><button class="btn sm" data-undel>Batal</button>`
+      : `<button class="btn sm" data-edit="${x.id}">${ic('edit')}Edit</button><button class="btn sm ghost" data-askdel="${x.id}" aria-label="Padam ${esc(x.name)}">${ic('trash')}</button>`}</div></div></div></div>`).join('')}</div></div>`).join('')
+  : `<div class="card" style="text-align:center;justify-items:center;padding:28px"><div class="thumb lg" style="--h:40">${ic('bowl', '')}</div><h2>Tambah menu pertama</h2><p class="muted" style="max-width:46ch">Mula dengan 5–10 menu paling laris. Gambar boleh ditambah kemudian. Untuk minuman, guna pilihan “Suhu” supaya pelanggan pilih panas atau ais.</p><button class="btn pri lg" id="addItem2">${ic('plus')}Tambah menu</button></div>`}`;
+}
+// Status semakan admin untuk satu menu
+function itemReview(x) {
+  if (x.status === 'menunggu') return `<span class="small" style="color:var(--warn)">${ic('clock')} Menunggu kelulusan admin. Belum dipaparkan kepada pelanggan.</span>`;
+  if (x.status === 'tolak') return `<span class="small" style="color:var(--bad)">Ditolak${x.reason ? ': ' + esc(x.reason) : ''}. Edit dan simpan untuk hantar semula.</span>`;
+  if (x.pending) return `<span class="small" style="color:var(--warn)">${ic('clock')} Perubahan menunggu kelulusan${x.pending.price !== undefined && Number(x.pending.price) !== Number(x.price) ? ` (harga baru ${rm(x.pending.price)})` : ''}. Pelanggan masih nampak versi lama. <button class="btn sm ghost" data-cancelitem="${x.id}">Batalkan</button></span>`;
+  if (x.reason) return `<span class="small" style="color:var(--bad)">Perubahan terakhir tidak diluluskan: ${esc(x.reason)}</span>`;
+  return '';
+}
+const TEMPLATES = {
+  'Suhu': { name: 'Suhu', required: true, multi: false, choices: [{ name: 'Panas', price: 0 }, { name: 'Ais', price: 0.3 }] },
+  'Tahap pedas': { name: 'Tahap pedas', required: true, multi: false, choices: [{ name: 'Tak pedas', price: 0 }, { name: 'Sederhana', price: 0 }, { name: 'Pedas', price: 0 }] },
+  'Saiz': { name: 'Saiz', required: true, multi: false, choices: [{ name: 'Biasa', price: 0 }, { name: 'Besar', price: 1 }] },
+  'Manis': { name: 'Manis', required: false, multi: false, choices: [{ name: 'Kurang manis', price: 0 }, { name: 'Kosong', price: 0 }] },
+  'Tambahan': { name: 'Tambahan', required: false, multi: true, choices: [{ name: 'Telur mata', price: 1.5 }, { name: 'Telur dadar', price: 1.5 }] }
+};
+function openEditor(id) {
+  const x = id ? MENU.find(m => m.id === id) : null;
+  // Kalau ada perubahan yang menunggu kelulusan, sambung dari versi itu
+  EI = x ? JSON.parse(JSON.stringify({ ...x, ...(x.pending || {}) })) : { shop_id: SHOP.id, name: '', price: '', category: MENU[0]?.category || '', description: '', image_url: null, is_hot: false, available: true, options: [], sort: 0 };
+  EI.file = null;
+  const cats = [...new Set(MENU.map(m => m.category))];
+  sheet(`${sheetHead(x ? 'Edit menu' : 'Tambah menu')}
+  <form id="itemForm" class="stack" style="gap:14px" novalidate>
+    <div class="frow two"><div class="field"><label for="iName">Nama menu</label><input class="input" id="iName" data-ei="name" maxlength="80" value="${esc(EI.name)}" placeholder="Contoh: Nasi Goreng Kampung"></div>
+    <div class="field"><label for="iPrice">Harga (RM)</label><input class="input num" id="iPrice" data-ei="price" type="number" step="0.10" min="0" inputmode="decimal" value="${EI.price}" placeholder="6.50"></div></div>
+    <div class="field"><label for="iCat">Kategori</label><input class="input" id="iCat" data-ei="category" maxlength="40" list="catList" value="${esc(EI.category)}" placeholder="Contoh: Nasi, Mee, Minuman"><datalist id="catList">${cats.map(c => `<option value="${esc(c)}">`).join('')}</datalist>
+      ${cats.length ? `<div class="chips">${cats.map(c => `<button type="button" class="chip" data-pickcat="${esc(c)}">${esc(c)}</button>`).join('')}</div>` : ''}</div>
+    <div class="field"><label for="iDesc">Penerangan (pilihan)</label><input class="input" id="iDesc" data-ei="description" maxlength="160" value="${esc(EI.description)}" placeholder="Contoh: Dengan telur mata dan ayam goreng"></div>
+    <div class="field"><span class="flabel">Gambar (pilihan)</span><div class="imgprev"><div id="imgPrev">${thumb(EI.name || 'x', { img: EI.image_url, icon: foodIcon(EI.name, EI.category), cls: 'lg' })}</div>
+      <div class="stack" style="gap:6px"><label class="btn sm" style="cursor:pointer">${ic('plus')}Pilih gambar<input type="file" id="iImg" accept="image/*" class="sr"></label>${EI.image_url ? '<button type="button" class="btn sm ghost" id="rmImg">Buang gambar</button>' : ''}<span class="hint">Gambar dikecilkan secara automatik.</span></div></div></div>
+    <div class="row" style="gap:18px">
+      <label class="row nowrap" style="gap:10px;cursor:pointer"><span class="toggle"><input type="checkbox" data-ei="available" ${EI.available ? 'checked' : ''}><span></span></span>Ada stok</label>
+      <label class="row nowrap" style="gap:10px;cursor:pointer"><span class="toggle"><input type="checkbox" data-ei="is_hot" ${EI.is_hot ? 'checked' : ''}><span></span></span>Paling laris</label></div>
+    <div class="stack" style="gap:10px;border-top:1px solid var(--line);padding-top:14px">
+      <div><h3>Pilihan tambahan</h3><p class="small muted">Contoh: panas atau ais, tahap pedas, saiz besar +RM1, tambah telur. Harga tambahan dikira sendiri.</p></div>
+      <div class="chips">${Object.keys(TEMPLATES).map(k => `<button type="button" class="chip" data-tpl="${k}">${ic('plus')}${k}</button>`).join('')}<button type="button" class="chip" data-tpl="">${ic('plus')}Kumpulan kosong</button></div>
+      <div id="optsBox" class="stack" style="gap:10px"></div>
+    </div>
+    <div id="itemErr"></div>
+    <div class="sticky-foot"><button class="btn pri lg block" id="saveItem">${x ? 'Simpan perubahan' : 'Tambah ke menu'}</button></div>
+  </form>`, { wide: true });
+  renderOpts();
+}
+function renderOpts() {
+  $('#optsBox').innerHTML = EI.options.map((g, gi) => `<div class="optgroup">
+    <div class="row nowrap"><input class="input sm" data-og="${gi}" data-of="name" value="${esc(g.name)}" placeholder="Nama kumpulan, cth: Suhu" aria-label="Nama kumpulan pilihan" style="flex:1"><button type="button" class="btn sm ghost" data-rmg="${gi}" aria-label="Buang kumpulan">${ic('trash')}</button></div>
+    <div class="row small" style="gap:16px">
+      <label class="row nowrap" style="gap:8px;cursor:pointer"><span class="toggle"><input type="checkbox" data-og="${gi}" data-of="required" ${g.required ? 'checked' : ''}><span></span></span>Wajib pilih</label>
+      <label class="row nowrap" style="gap:8px;cursor:pointer"><span class="toggle"><input type="checkbox" data-og="${gi}" data-of="multi" ${g.multi ? 'checked' : ''}><span></span></span>Boleh pilih banyak</label></div>
+    <div class="stack" style="gap:6px"><div class="choice small muted"><span>Pilihan</span><span>Tambah harga (RM)</span><span></span></div>
+    ${g.choices.map((c, ci) => `<div class="choice"><input class="input sm" data-og="${gi}" data-oc="${ci}" data-of="name" value="${esc(c.name)}" placeholder="cth: Ais" aria-label="Nama pilihan"><input class="input sm num" type="number" step="0.10" min="0" inputmode="decimal" data-og="${gi}" data-oc="${ci}" data-of="price" value="${c.price || 0}" aria-label="Tambah harga"><button type="button" class="btn sm ghost" data-rmc="${gi}:${ci}" aria-label="Buang pilihan">${ic('x')}</button></div>`).join('')}</div>
+    <button type="button" class="btn sm" data-addc="${gi}" style="justify-self:start">${ic('plus')}Tambah pilihan</button>
+  </div>`).join('');
+}
+async function saveItem() {
+  const btn = $('#saveItem'), err = $('#itemErr'); err.innerHTML = '';
+  const fail = (m) => { err.innerHTML = `<div class="err">${ic('alert')}${esc(m)}</div>`; err.scrollIntoView({ behavior: 'smooth', block: 'center' }); };
+  const name = String(EI.name).trim(), price = parseFloat(EI.price);
+  if (!name) return fail('Sila isi nama menu.');
+  if (isNaN(price) || price < 0) return fail('Sila isi harga yang betul.');
+  const options = EI.options.map(g => ({ name: String(g.name).trim(), required: !!g.required, multi: !!g.multi, choices: g.choices.map(c => ({ name: String(c.name).trim(), price: Math.max(0, Math.round((parseFloat(c.price) || 0) * 100) / 100) })).filter(c => c.name) })).filter(g => g.name || g.choices.length);
+  for (const g of options) {
+    if (!g.name) return fail('Setiap kumpulan pilihan perlu ada nama.');
+    if (!g.choices.length) return fail(`Kumpulan "${g.name}" perlu sekurang-kurangnya satu pilihan.`);
+    if (new Set(g.choices.map(c => c.name)).size !== g.choices.length) return fail(`Ada pilihan yang sama dalam "${g.name}".`);
+  }
+  if (new Set(options.map(g => g.name)).size !== options.length) return fail('Nama kumpulan pilihan tidak boleh sama.');
+  busy(btn, true);
+  try {
+    let image_url = EI.image_url;
+    if (EI.file) image_url = await api.uploadImage(await imageToBlob(EI.file));
+    const saved = await api.saveItem({ id: EI.id, shop_id: SHOP.id, name, price: Math.round(price * 100) / 100, category: String(EI.category).trim() || 'Lain-lain', description: String(EI.description || '').trim(), image_url, is_hot: !!EI.is_hot, available: !!EI.available, options, sort: EI.sort || 0 });
+    const i = MENU.findIndex(m => m.id === saved.id); if (i >= 0) MENU[i] = saved; else MENU.push(saved);
+    const review = SHOP.status === 'lulus' && (saved.pending || saved.status === 'menunggu');
+    closeSheet(); render(); toast(review ? 'Dihantar untuk kelulusan admin' : EI.id ? 'Menu dikemas kini' : name + ' ditambah ke menu');
+  } catch (e) { busy(btn, false); fail(e.message); }
+}
+
+/* ----- Laporan ----- */
+async function tReport() {
+  $('#tabBody').innerHTML = `<div class="row between"><div class="seg" style="max-width:420px;flex:1">${[['today', 'Hari ini'], ['7', '7 hari'], ['30', '30 hari']].map(([k, l]) => `<button class="${range === k ? 'on' : ''}" data-range="${k}">${l}</button>`).join('')}</div><button class="btn sm" id="csvBtn">Muat turun CSV</button></div><div id="repBody">${loading()}</div>`;
+  const start = new Date(); start.setHours(0, 0, 0, 0); if (range !== 'today') start.setDate(start.getDate() - (+range - 1));
+  try { REPORT = await api.listOrders(SHOP.id, start.toISOString()); } catch (e) { $('#repBody').innerHTML = emptyState('alert', esc(e.message)); return; }
+  const ok = REPORT.filter(o => o.status !== 'batal'), sales = ok.reduce((a, o) => a + Number(o.total), 0);
+  // carta: ikut jam (hari ini) atau ikut hari
+  let buckets = [];
+  if (range === 'today') {
+    const hrs = ok.map(o => new Date(o.created_at).getHours()); const h0 = Math.min(7, ...hrs), h1 = Math.max(new Date().getHours(), ...hrs, h0 + 5);
+    for (let h = h0; h <= h1; h++) buckets.push({ label: String(h).padStart(2, '0'), v: ok.filter(o => new Date(o.created_at).getHours() === h).reduce((a, o) => a + Number(o.total), 0) });
+  } else {
+    for (let d = new Date(start); d <= new Date(); d.setDate(d.getDate() + 1)) { const ds = d.toDateString(); buckets.push({ label: d.getDate() + '/' + (d.getMonth() + 1), v: ok.filter(o => new Date(o.created_at).toDateString() === ds).reduce((a, o) => a + Number(o.total), 0) }); }
+  }
+  const mx = Math.max(1, ...buckets.map(b => b.v));
+  const items = {}; ok.forEach(o => o.items.forEach(i => { const k = i.name; items[k] = items[k] || { qty: 0, rev: 0 }; items[k].qty += i.qty; items[k].rev += i.qty * i.unit; }));
+  const top = Object.entries(items).sort((a, b) => b[1].qty - a[1].qty).slice(0, 10);
+  const split = (key, val) => ok.filter(o => o[key] === val);
+  const dine = split('order_type', 'dine'), pick = split('order_type', 'pickup'), cash = split('pay_method', 'cash'), dn = split('pay_method', 'duitnow');
+  const sum = (a) => a.reduce((x, o) => x + Number(o.total), 0);
+  const hb = (label, n, total, of) => `<div class="hbar"><div class="row between small"><span>${label}</span><span class="num"><b>${n}</b> order · ${rm(total)}</span></div><div class="track"><i style="width:${of ? n / of * 100 : 0}%"></i></div></div>`;
+  $('#repBody').innerHTML = `<div class="stack" style="gap:14px;margin-top:14px">
+    <div class="kpis"><div class="kpi"><span class="small muted">Jualan</span><b>${rm(sales)}</b></div><div class="kpi"><span class="small muted">Bil. order</span><b>${ok.length}</b></div>
+    <div class="kpi"><span class="small muted">Purata satu order</span><b>${rm(ok.length ? sales / ok.length : 0)}</b></div><div class="kpi"><span class="small muted">Dibatalkan</span><b>${REPORT.length - ok.length}</b></div></div>
+    <div class="card"><div class="row between"><h3>Jualan ${range === 'today' ? 'ikut jam' : 'ikut hari'}</h3><span class="small muted">RM, tidak termasuk order batal</span></div>
+      <div class="chart-wrap"><div class="chart" role="img" aria-label="Carta jualan">${buckets.map(b => `<div class="col"><div class="bar" style="height:${b.v / mx * 100}%">${b.v ? `<span>${Math.round(b.v)}</span>` : ''}</div><span class="lbl">${b.label}</span></div>`).join('')}</div></div></div>
+    <div class="grid g2" style="align-items:start">
+      <div class="card"><h3>Menu paling laris</h3>${top.length ? `<div class="chart-wrap"><table class="t"><thead><tr><th>Menu</th><th class="n">Unit</th><th class="n">Jualan</th></tr></thead><tbody>${top.map(([n, v]) => `<tr><td>${esc(n)}</td><td class="n">${v.qty}</td><td class="n">${rm(v.rev)}</td></tr>`).join('')}</tbody></table></div>` : '<p class="muted small">Belum ada jualan dalam tempoh ini.</p>'}</div>
+      <div class="card"><h3>Pecahan</h3>${hb('Dine-in', dine.length, sum(dine), ok.length)}${hb('Pickup', pick.length, sum(pick), ok.length)}<div style="height:6px"></div>${hb('Tunai', cash.length, sum(cash), ok.length)}${hb('DuitNow QR', dn.length, sum(dn), ok.length)}
+        <p class="small muted">Semak jumlah DuitNow dengan penyata bank anda.</p></div></div></div>`;
+}
+function downloadCSV() {
+  if (!REPORT) return;
+  const rows = [['No order', 'Tarikh', 'Masa', 'Jenis', 'Meja/Masa ambil', 'Nama', 'Telefon', 'Item', 'Jumlah (RM)', 'Bayaran', 'Status']]
+    .concat(REPORT.map(o => [o.id, new Date(o.created_at).toLocaleDateString('ms-MY'), fmtTime(o.created_at), o.order_type === 'dine' ? 'Dine-in' : 'Pickup', o.order_type === 'dine' ? o.table_no : o.pickup_time, o.customer_name, o.customer_phone || '', o.items.map(i => `${i.qty}x ${i.name}${i.options?.length ? ' (' + i.options.join('/') + ')' : ''}`).join('; '), Number(o.total).toFixed(2), PAY[o.pay_method], STATUS[o.status]]));
+  // Keselamatan: sel yang bermula dengan = + - @ dijadikan teks supaya Excel tidak jalankan formula dari nama pelanggan
+  const cell = (v) => { let s = String(v ?? ''); if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; return `"${s.replace(/"/g, '""')}"`; };
+  const csv = '﻿' + rows.map(r => r.map(cell).join(',')).join('\r\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' })); a.download = `laporan-${SHOP.slug}-${range}.csv`; document.body.appendChild(a); a.click(); a.remove();
+}
+
+/* ----- Profil kedai ----- */
+function tShop() {
+  const s = { ...SHOP, ...(SHOP.pending || {}) }; // tunjuk versi yang sedang menunggu kelulusan
+  $('#tabBody').innerHTML = `<form class="card stack" id="shopForm" style="gap:14px;max-width:680px" novalidate>
+    ${SHOP.status === 'lulus' ? `<p class="small muted">Perubahan nama, kawasan, telefon, waktu, alamat, penerangan dan QR DuitNow disemak oleh admin dahulu. Masa siap berubah serta-merta.</p>` : ''}
+    <div class="field"><label for="pName">Nama kedai</label><input class="input" id="pName" maxlength="80" value="${esc(s.name)}"></div>
+    <div class="frow two"><div class="field"><label for="pCuisine">Jenis makanan</label><input class="input" id="pCuisine" maxlength="60" value="${esc(s.cuisine)}"></div>
+    <div class="field"><label for="pArea">Kawasan</label><select class="input" id="pArea">${C.AREAS.map(a => `<option ${a === s.area ? 'selected' : ''}>${esc(a)}</option>`).join('')}</select></div></div>
+    <div class="frow two"><div class="field"><label for="pHours">Waktu operasi</label><input class="input" id="pHours" maxlength="60" value="${esc(s.hours)}"></div>
+    <div class="field"><label for="pPrep">Anggaran masa siap (minit)</label><input class="input num" id="pPrep" type="number" min="1" max="180" value="${s.prep_min}"></div></div>
+    <div class="field"><label for="pPhone">No. WhatsApp kedai</label><input class="input num" id="pPhone" inputmode="tel" maxlength="20" value="${esc(s.phone)}"><span class="hint">Pelanggan guna nombor ini untuk WhatsApp kedai.</span></div>
+    <div class="field"><label for="pDesc">Penerangan ringkas</label><textarea class="input" id="pDesc" maxlength="300">${esc(s.description)}</textarea></div>
+    <div class="field"><span class="flabel">QR DuitNow kedai</span><div class="imgprev">${s.duitnow_url ? `<div class="qrbox"><img src="${esc(safeUrl(s.duitnow_url))}" alt="QR DuitNow" width="120"></div>` : '<span class="small muted">Belum dimuat naik.</span>'}
+      <label class="btn sm" style="cursor:pointer">${ic('plus')}${s.duitnow_url ? 'Tukar' : 'Muat naik'} QR<input type="file" id="pQR" accept="image/*" class="sr"></label></div>
+      <span class="hint">Screenshot QR DuitNow dari app bank anda. Pelanggan yang pilih DuitNow akan nampak QR ini.</span></div>
+    <div class="field"><span class="flabel">Pautan kedai</span><code style="word-break:break-all;padding:8px 10px">${esc(shopUrl())}</code><span class="hint">Pautan tidak boleh ditukar supaya QR yang sudah dicetak terus berfungsi.</span></div>
+    <div id="shopErr"></div>
+    <button class="btn pri lg" id="saveShop">Simpan profil</button>
+  </form>
+  <p class="small muted">Log masuk sebagai ${esc(USER.email || '')}</p>`;
+}
+async function saveShop() {
+  const btn = $('#saveShop'), err = $('#shopErr'); err.innerHTML = '';
+  const name = $('#pName').value.trim(); if (name.length < 2) { err.innerHTML = `<div class="err">${ic('alert')}Sila isi nama kedai.</div>`; return; }
+  busy(btn, true);
+  try {
+    const d = { name, cuisine: $('#pCuisine').value.trim(), area: $('#pArea').value, hours: $('#pHours').value.trim(), prep_min: Math.min(180, Math.max(1, parseInt($('#pPrep').value) || 15)), phone: normPhone($('#pPhone').value), description: $('#pDesc').value.trim() };
+    SHOP = await api.updateShop(SHOP.id, d); render(); toast(SHOP.pending ? 'Perubahan dihantar untuk kelulusan admin' : 'Profil disimpan');
+  } catch (e) { busy(btn, false); err.innerHTML = `<div class="err">${ic('alert')}${esc(e.message)}</div>`; }
+}
+
+/* ----- QR ----- */
+function tQR() {
+  $('#tabBody').innerHTML = `<div class="grid g2" style="align-items:start">
+    <div class="card" style="justify-items:start"><h3>QR menu kedai</h3><p class="small muted">Untuk kaunter, poster, status WhatsApp dan Facebook. Pelanggan imbas dan terus nampak menu.</p>
+      <div class="qrbox" id="qrMain"></div>
+      <div class="row nowrap" style="width:100%"><input class="input" id="shopLink" value="${esc(shopUrl())}" readonly aria-label="Pautan kedai"><button class="btn sm" id="copyLink">Salin</button></div>
+      <div class="row"><button class="btn" id="printCounter">${ic('print')}Cetak poster kaunter</button><a class="btn ghost" href="${esc(shopUrl())}" target="_blank" rel="noopener">${ic('ext')}Buka</a></div></div>
+    <div class="card"><h3>QR untuk setiap meja</h3><p class="small muted">Setiap QR ada nombor meja sendiri, jadi pelanggan tak perlu taip nombor meja. Cetak, gunting dan tampal di meja.</p>
+      <div class="frow two"><div class="field"><label for="qFrom">Dari meja</label><input class="input num" id="qFrom" type="number" min="1" max="200" value="1"></div><div class="field"><label for="qTo">Hingga meja</label><input class="input num" id="qTo" type="number" min="1" max="200" value="10"></div></div>
+      <button class="btn pri" id="printTables">${ic('print')}Cetak QR meja</button>
+      <span class="hint">Tip: laminate kertas supaya tahan lama.</span></div></div>`;
+  makeQR($('#qrMain'), shopUrl(), 180);
+}
+function makeQR(el, text, size) {
+  if (!window.QRCode) { el.innerHTML = '<span class="small" style="color:#333">QR tidak dapat dijana. Semak internet.</span>'; return; }
+  el.innerHTML = ''; new QRCode(el, { text, width: size, height: size, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+}
+function printPosters(tables) {
+  const p = $('#print');
+  p.innerHTML = `<div class="posters">${tables.length ? tables.map(t => `<div class="poster"><h2>${esc(SHOP.name)}</h2><div>Imbas untuk lihat menu & order</div><div class="q" data-url="${esc(shopUrl(t))}"></div><div class="meja">Meja ${esc(t)}</div><div class="brand">Lapar Ek? · bayar di kaunter atau DuitNow</div></div>`).join('')
+    : `<div class="poster single"><h2 style="font-size:32px">${esc(SHOP.name)}</h2><div style="font-size:18px">Imbas untuk order dine-in atau pickup</div><div class="q" data-url="${esc(shopUrl())}" data-size="320"></div><div class="brand" style="font-size:14px">Lapar Ek? · tiada caj tambahan</div></div>`}</div>`;
+  $$('.q', p).forEach(el => makeQR(el, el.dataset.url, +(el.dataset.size || 200)));
+  setTimeout(() => window.print(), 400);
+}
+
+/* ================= Event ================= */
+document.addEventListener('click', async (e) => {
+  const t = e.target;
+  const tb = t.closest('[data-tab]'); if (tb) { tab = tb.dataset.tab; confirmDel = null; render(); return; }
+  if (t.closest('#soundBtn')) { sound = !sound; if (sound) beep(); render(); return; }
+  const st = t.closest('[data-st]'); if (st) { setStatus(st.dataset.id, st.dataset.st, st); return; }
+  const pr = t.closest('[data-print]'); if (pr) { printTicket(pr.dataset.print); return; }
+  if (t.closest('#addItem') || t.closest('#addItem2')) { openEditor(null); return; }
+  const ed = t.closest('[data-edit]'); if (ed) { openEditor(ed.dataset.edit); return; }
+  if (t.closest('#recheck')) { init(); return; }
+  if (t.closest('[data-cancelshop]')) { try { SHOP = await api.cancelShopChange(SHOP.id); render(); toast('Permohonan dibatalkan'); } catch (er) { toast(er.message, 'err'); } return; }
+  const ci = t.closest('[data-cancelitem]');
+  if (ci) { try { const s = await api.cancelItemChange(ci.dataset.cancelitem); const it = MENU.find(m => m.id === s.id); Object.assign(it, s); render(); toast('Perubahan dibatalkan'); } catch (er) { toast(er.message, 'err'); } return; }
+  const ad = t.closest('[data-askdel]'); if (ad) { confirmDel = ad.dataset.askdel; render(); return; }
+  if (t.closest('[data-undel]')) { confirmDel = null; render(); return; }
+  const dl = t.closest('[data-del]');
+  if (dl) { try { await api.deleteItem(dl.dataset.del); MENU = MENU.filter(m => m.id !== dl.dataset.del); confirmDel = null; render(); toast('Menu dipadam'); } catch (er) { toast(er.message, 'err'); } return; }
+  const pc = t.closest('[data-pickcat]'); if (pc) { $('#iCat').value = EI.category = pc.dataset.pickcat; return; }
+  if (t.closest('#rmImg')) { EI.image_url = null; EI.file = null; $('#imgPrev').innerHTML = thumb(EI.name || 'x', { icon: foodIcon(EI.name, EI.category), cls: 'lg' }); t.closest('#rmImg').remove(); return; }
+  const tp = t.closest('[data-tpl]'); if (tp) { EI.options.push(tp.dataset.tpl ? JSON.parse(JSON.stringify(TEMPLATES[tp.dataset.tpl])) : { name: '', required: false, multi: false, choices: [{ name: '', price: 0 }] }); renderOpts(); return; }
+  const rg = t.closest('[data-rmg]'); if (rg) { EI.options.splice(+rg.dataset.rmg, 1); renderOpts(); return; }
+  const ac = t.closest('[data-addc]'); if (ac) { EI.options[+ac.dataset.addc].choices.push({ name: '', price: 0 }); renderOpts(); $$(`[data-og="${ac.dataset.addc}"][data-of=name][data-oc]`).pop()?.focus(); return; }
+  const rc = t.closest('[data-rmc]'); if (rc) { const [g, c] = rc.dataset.rmc.split(':').map(Number); EI.options[g].choices.splice(c, 1); renderOpts(); return; }
+  const rgb = t.closest('[data-range]'); if (rgb) { range = rgb.dataset.range; tReport(); return; }
+  if (t.closest('#csvBtn')) { downloadCSV(); return; }
+  if (t.closest('#copyLink')) { const i = $('#shopLink'); try { await navigator.clipboard.writeText(i.value); toast('Pautan disalin'); } catch (er) { i.select(); toast('Tekan Ctrl+C untuk salin'); } return; }
+  if (t.closest('#printCounter')) { printPosters([]); return; }
+  if (t.closest('#printTables')) {
+    const a = Math.max(1, parseInt($('#qFrom').value) || 1), b = Math.min(200, Math.max(a, parseInt($('#qTo').value) || a));
+    if (b - a > 59) { toast('Maksimum 60 meja sekali cetak', 'err'); return; }
+    printPosters(Array.from({ length: b - a + 1 }, (_, i) => String(a + i))); return;
+  }
+});
+document.addEventListener('input', (e) => {
+  const t = e.target;
+  if (t.id === 'sName' && !slugTouched && $('#sSlug')) { $('#sSlug').value = slugify(t.value); }
+  if (t.id === 'sSlug') slugTouched = true;
+  if ((t.id === 'sName' || t.id === 'sSlug') && $('#slugPrev')) $('#slugPrev').textContent = shopBase() + '?k=' + (slugify($('#sSlug').value) || '…');
+  if (t.dataset.ei && t.type !== 'checkbox') EI[t.dataset.ei] = t.value;
+  if (t.dataset.og !== undefined && t.type !== 'checkbox') {
+    const g = EI.options[+t.dataset.og];
+    if (t.dataset.oc !== undefined) g.choices[+t.dataset.oc][t.dataset.of] = t.value; else g[t.dataset.of] = t.value;
+  }
+});
+document.addEventListener('change', async (e) => {
+  const t = e.target;
+  if (t.dataset.ei && t.type === 'checkbox') EI[t.dataset.ei] = t.checked;
+  if (t.dataset.og !== undefined && t.type === 'checkbox') EI.options[+t.dataset.og][t.dataset.of] = t.checked;
+  if (t.id === 'iImg' && t.files[0]) { EI.file = t.files[0]; $('#imgPrev').innerHTML = `<div class="thumb lg"><img src="${URL.createObjectURL(t.files[0])}" alt=""></div>`; }
+  if (t.id === 'openToggle') {
+    try { SHOP = await api.updateShop(SHOP.id, { is_open: t.checked }); render(); toast(t.checked ? 'Order online dibuka' : 'Order online ditutup'); }
+    catch (er) { t.checked = !t.checked; toast(er.message, 'err'); }
+  }
+  const av = t.dataset.avail;
+  if (av) {
+    const it = MENU.find(m => m.id === av);
+    try { const s = await api.saveItem({ ...it, available: t.checked }); Object.assign(it, s); render(); toast(it.name + (t.checked ? ' ada semula' : ' ditanda habis')); }
+    catch (er) { t.checked = !t.checked; toast(er.message, 'err'); }
+  }
+  if (t.id === 'pQR' && t.files[0]) {
+    try { toast('Memuat naik QR…'); const url = await api.uploadImage(await imageToBlob(t.files[0], 700, .9)); SHOP = await api.updateShop(SHOP.id, { duitnow_url: url }); render(); toast(SHOP.pending ? 'QR baru dihantar untuk kelulusan admin' : 'QR DuitNow disimpan'); }
+    catch (er) { toast(er.message, 'err'); }
+  }
+});
+document.addEventListener('submit', async (e) => {
+  e.preventDefault(); const f = e.target;
+  if (f.id === 'setupForm') submitSetup();
+  if (f.id === 'itemForm') saveItem();
+  if (f.id === 'shopForm') saveShop();
+});
+
+if (demoBanner()) init();
+</script>
+</body>
+</html>
+<script async src="/.netlify/scripts/hud?variant=public" data-nf-variant="public" data-netlify-site-id="1b819d4e-6353-48d8-8790-399d1727896c" data-app-host="app.netlify.com" data-account-tier="free"></script>

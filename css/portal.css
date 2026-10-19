@@ -1,0 +1,111 @@
+/* Segamat Kita — gaya tambahan untuk portal, dashboard penyedia dan panel admin */
+:root{--foot-bg:#0b3d31;--foot-ink:#eaf4ef;--foot-muted:#9fc0b3;--foot-line:#1d5446}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--foot-bg:#08100d;--foot-ink:#e3eee8;--foot-muted:#8a9e95;--foot-line:#1c2a24}}
+:root[data-theme="dark"]{--foot-bg:#08100d;--foot-ink:#e3eee8;--foot-muted:#8a9e95;--foot-line:#1c2a24}
+
+body.portal{padding-bottom:calc(76px + env(safe-area-inset-bottom,0px))}
+@media (min-width:860px){body.portal{padding-bottom:0}}
+.logo .mark.brand{background:var(--brand);color:var(--brand-ink);position:relative;overflow:hidden}
+.logo .mark.brand::after{content:"";position:absolute;width:13px;height:13px;border-radius:50%;background:var(--accent);right:-4px;top:-4px}
+.topnav{display:none;gap:2px;margin-left:10px}
+.topnav a{padding:8px 13px;border-radius:999px;text-decoration:none;color:var(--muted);font-weight:600}
+.topnav a:hover{color:var(--ink)}
+.topnav a.on{background:var(--soft);color:var(--ink)}
+@media (min-width:860px){.topnav{display:flex}}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);padding-bottom:env(safe-area-inset-bottom,0px);padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px)}
+nav.tabs a{display:flex;flex-direction:column;align-items:center;gap:3px;padding:7px 2px 8px;text-decoration:none;color:var(--muted);font-size:11px;font-weight:700;white-space:nowrap}
+nav.tabs a span.ic{display:grid;place-items:center;width:52px;height:30px;border-radius:999px}
+nav.tabs a.on{color:var(--ink)}
+nav.tabs a.on span.ic{background:var(--soft);color:var(--brand)}
+@media (min-width:860px){nav.tabs{display:none}}
+@media (max-width:440px){
+  header.top .wrap{gap:5px}
+  .logo{font-size:15.5px;gap:6px}
+  .logo .mark{width:28px;height:28px;border-radius:9px}
+  header.top .iconbtn{width:36px;height:36px;border-radius:10px}
+  header.top .avatar{width:36px;height:36px}
+  header.top .btn.sm{padding:6px 10px}
+}
+
+/* kotak pintasan */
+.quick{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media (min-width:700px){.quick{grid-template-columns:repeat(4,1fr)}}
+.quick a{display:grid;gap:8px;padding:16px;border-radius:var(--r);background:var(--surface);border:1px solid var(--line);text-decoration:none;color:var(--ink);align-content:start}
+.quick a:hover{border-color:var(--brand)}
+.quick .qi{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--soft);color:var(--brand)}
+.quick b{font-family:var(--f-display);font-size:17px}
+.quick span{font-size:13px;color:var(--muted)}
+
+/* cuaca & IPU */
+.wx{display:grid;gap:12px;grid-template-columns:1fr}
+@media (min-width:760px){.wx{grid-template-columns:1.5fr 1fr}}
+.wxbig{width:60px;height:60px;border-radius:16px;display:grid;place-items:center;background:var(--soft);color:var(--brand);flex:none}
+svg.wxi{width:34px;height:34px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.wxtemp{font-family:var(--f-display);font-size:28px;line-height:1.1}
+.wxparts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.wxparts>div{display:grid;gap:4px;justify-items:start;background:var(--bg);border-radius:12px;padding:8px 10px;min-width:0}
+.wxparts .i,.wxday .i{color:var(--brand)}
+.wxdays{display:flex;gap:8px}
+.wxday{display:grid;justify-items:center;gap:4px;min-width:70px;padding:8px 6px;border:1px solid var(--line);border-radius:12px;text-align:center}
+.ipucard.ok{--ipu:var(--ok);--ipu-bg:var(--ok-bg)} .ipucard.warn{--ipu:var(--warn);--ipu-bg:var(--warn-bg)} .ipucard.bad{--ipu:var(--bad);--ipu-bg:var(--bad-bg)}
+.ipucard{background:var(--ipu-bg);border-color:transparent}
+.ipunum{font-family:var(--f-display);font-size:52px;line-height:.9;color:var(--ipu)}
+.ipucat{color:var(--ipu);font-size:17px}
+.ipubar{position:relative;height:8px;border-radius:4px;background:linear-gradient(90deg,var(--ok) 0 16.6%,var(--warn) 16.6% 33.3%,var(--bad) 33.3% 100%);opacity:.85}
+.ipubar i{position:absolute;top:-4px;width:4px;height:16px;border-radius:2px;background:var(--ink);transform:translateX(-50%)}
+.ipucard .btn{background:var(--surface)}
+.sos{background:var(--bad-bg);border-color:transparent;color:var(--bad);gap:4px}
+.sos .small{color:var(--ink);opacity:.85}
+.sos .btn{border-color:color-mix(in srgb,var(--bad) 40%,transparent);color:var(--bad);background:transparent;white-space:normal;text-align:left}
+
+/* kad kandungan */
+.shopcard{padding:0;overflow:hidden;gap:0}
+.shopcard .cv{height:80px;position:relative;background:hsl(var(--h) 38% var(--thumb-l));color:hsl(var(--h) 45% var(--thumb-tl));display:flex;align-items:flex-end;gap:6px;padding:10px 12px}
+.shopcard .bd{padding:14px 16px 16px;display:grid;gap:4px}
+.post-img{width:100%;max-height:220px;object-fit:cover;border-radius:10px;display:block}
+.post details summary{cursor:pointer;font-weight:700;color:var(--brand);font-size:14px;list-style:none}
+.post details summary::-webkit-details-marker{display:none}
+.post details[open] summary{display:none}
+.verified{color:var(--brand);font-weight:700;font-size:12px;display:inline-flex;gap:3px;align-items:center}
+.inc{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.inc li{display:flex;gap:8px;align-items:center;font-size:14px}
+.inc li svg{color:var(--ok)}
+.hotnum{font-family:var(--f-display);font-weight:800;font-size:24px;letter-spacing:.02em}
+.mysubs{padding:12px 14px}
+.mysubs summary{cursor:pointer;list-style:none;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.mysubs summary::-webkit-details-marker{display:none}
+
+/* footer */
+.site-foot{background:var(--foot-bg);color:var(--foot-ink);margin-top:20px}
+.site-foot .wrap{padding-block:44px 18px;display:grid;gap:30px}
+.foot-grid{display:grid;gap:28px;grid-template-columns:1fr 1fr}
+.foot-brand{grid-column:1/-1;display:grid;gap:12px;align-content:start;max-width:42ch}
+@media (min-width:860px){.foot-grid{grid-template-columns:2fr 1fr}.foot-brand{grid-column:auto}}
+.site-foot .logo{color:var(--foot-ink)}
+.foot-brand p{color:var(--foot-muted);font-size:14px;line-height:1.6}
+.foot-col{display:grid;gap:10px;align-content:start}
+.foot-col h3{font-family:var(--f-body);font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.09em;color:var(--foot-muted);margin-bottom:2px}
+.foot-col a{color:var(--foot-ink);text-decoration:none;font-size:14px;width:fit-content}
+.foot-col a:hover{text-decoration:underline;text-underline-offset:3px}
+.foot-bar{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;justify-content:space-between;border-top:1px solid var(--foot-line);padding-top:16px;font-size:12px;color:var(--foot-muted)}
+.foot-bar a{color:var(--foot-muted)}
+.legal{display:grid;gap:10px;font-size:14px;line-height:1.6}
+.legal h3{font-size:15px;margin-top:6px}
+
+/* dashboard & admin */
+.dash-tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none;margin-top:14px}
+.dash-tabs::-webkit-scrollbar{display:none}
+.dash-tabs button{border:0;background:transparent;padding:11px 12px;font-weight:800;color:var(--muted);border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.dash-tabs button.on{color:var(--ink);border-color:var(--brand)}
+.order{border-left:5px solid var(--line)}
+.order.st-baru{border-left-color:var(--bad)}
+.order.st-siap{border-left-color:var(--ok)}
+.admin-secs{display:grid;gap:10px;grid-template-columns:1fr}
+@media (min-width:640px){.admin-secs{grid-template-columns:repeat(3,1fr)}}
+.admin-sec{display:flex;gap:12px;align-items:center;text-align:left;font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;cursor:pointer;min-width:0}
+.admin-sec>svg{color:var(--brand);flex:none}
+.admin-sec .stack{flex:1}
+.admin-sec.on{border-color:var(--brand);box-shadow:inset 0 0 0 1px var(--brand);background:var(--soft)}
+.banner-note{padding:12px 14px;border-radius:var(--r);display:grid;gap:4px}
+.banner-note.wait{background:var(--warn-bg);color:var(--warn)}
+.banner-note.no{background:var(--bad-bg);color:var(--bad)}

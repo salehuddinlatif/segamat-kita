@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<!-- This site is hosted on Netlify. Anyone can build and deploy a site
+     like this one for free: https://netlify.new/?utm_campaign=loops&utm_source=ai-legible&utm_medium=owned&utm_content=comment&utm_id=1b819d4e-6353-48d8-8790-399d1727896c
+     Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e5846">
+<title>Lapar Ek? · Order makan di Segamat</title>
+<meta name="description" content="Order terus dari kedai makan Segamat untuk dine-in atau pickup. Tiada caj tambahan.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="css/ui.css">
+<link rel="stylesheet" href="css/portal.css">
+<style>
+.hero{background:linear-gradient(160deg,var(--brand) 0%,var(--brand-2) 100%);color:#fff;border-radius:22px;padding:24px 20px;display:grid;gap:12px;position:relative;overflow:hidden;isolation:isolate}
+.hero>*{position:relative;z-index:1}
+.hero .eyebrow{color:#fff;opacity:.8}
+.hero .river{position:absolute;right:0;bottom:0;width:75%;height:75%;opacity:.14;z-index:0}
+.hero .sun{position:absolute;right:20px;top:18px;width:58px;height:58px;border-radius:50%;background:var(--accent);z-index:0;box-shadow:0 0 0 12px color-mix(in srgb,var(--accent) 25%,transparent)}
+@media (max-width:600px){.hero .sun{width:40px;height:40px;right:14px;top:14px;box-shadow:0 0 0 8px color-mix(in srgb,var(--accent) 25%,transparent)}}
+.hero p.lede{max-width:50ch;opacity:.9}
+.hero .searchbox .input{border:0;box-shadow:var(--shadow)}
+.hero .chip{background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.28)}
+.hero .chip.on{background:#fff;color:var(--brand-2);border-color:#fff}
+.shopcard{padding:0;overflow:hidden;gap:0}
+.shopcard .cv{height:84px;position:relative;background:hsl(var(--h) 38% var(--thumb-l));color:hsl(var(--h) 45% var(--thumb-tl));display:flex;align-items:flex-end;gap:6px;padding:10px 12px}
+.shopcard .cv svg.art{position:absolute;right:-10px;top:-8px;width:110px;height:110px;opacity:.5;fill:none;stroke:currentColor;stroke-width:1.2}
+.shopcard .bd{padding:14px 16px 16px;display:grid;gap:4px}
+.shopcard.closed .cv{filter:grayscale(.85)}
+.cover{border-radius:22px;background:linear-gradient(150deg,hsl(var(--h) 45% 32%),hsl(var(--h) 50% 18%));color:#fff;padding:20px;position:relative;overflow:hidden;display:grid;gap:12px;isolation:isolate}
+.cover>*{position:relative;z-index:1}
+.cover svg.art{position:absolute;right:-20px;bottom:-30px;width:200px;height:200px;opacity:.16;fill:none;stroke:#fff;stroke-width:1;z-index:0}
+.cover .meta{display:flex;gap:8px;flex-wrap:wrap}
+.cover .meta span{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.14);padding:5px 10px;border-radius:999px;font-size:13px;font-weight:600}
+.cover .meta svg{width:15px;height:15px}
+.cover .btn{background:rgba(255,255,255,.14);border-color:transparent;color:#fff}
+.catbar{position:sticky;top:var(--hdr);z-index:15;background:var(--bg);padding-block:10px;margin-top:6px;border-bottom:1px solid var(--line)}
+.menu-cat{margin-top:22px;display:grid;gap:10px;scroll-margin-top:calc(var(--hdr) + 70px)}
+.menu-cat h3{font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-family:var(--f-body);font-weight:800}
+.cartbar{position:fixed;left:0;right:0;bottom:0;z-index:25;padding:0 max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));pointer-events:none}
+.cartbar button{pointer-events:auto;max-width:560px;margin:0 auto;width:100%;display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--brand);color:var(--brand-ink);border:0;border-radius:16px;padding:12px 14px 12px 12px;font-weight:800;box-shadow:var(--shadow);cursor:pointer;font-size:15px}
+.cartbar .cnt{display:inline-grid;place-items:center;min-width:30px;height:30px;border-radius:9px;background:rgba(255,255,255,.2);margin-right:8px}
+.cartbar.bump button{animation:bump .3s}
+/* telefon: troli duduk di atas bar navigasi bawah */
+@media (max-width:859px){body.portal .cartbar{bottom:calc(66px + env(safe-area-inset-bottom,0px));padding-bottom:10px}}
+body.with-cart main{padding-bottom:80px}
+@keyframes bump{40%{transform:scale(1.03)}}
+fieldset.opt{border:0;margin:0;padding:0;display:grid;gap:8px}
+fieldset.opt legend{display:flex;gap:8px;align-items:center;font-weight:800;margin-bottom:8px;padding:0}
+.opt .radio{padding:10px 14px}
+.step{display:grid;gap:10px}
+.step-h{display:flex;align-items:center;gap:8px;font-weight:800}
+.step-h i{font-style:normal;display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--ink);color:var(--bg);font-size:12px}
+.track{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.track div{display:grid;gap:6px;font-size:11px;font-weight:700;color:var(--muted);text-align:center}
+.track div::before{content:"";height:6px;border-radius:3px;background:var(--line)}
+.track div.done{color:var(--ok)} .track div.done::before{background:var(--ok)}
+.track div.now{color:var(--ink)}
+.track div.now::before{background:linear-gradient(90deg,var(--ok) 0 40%,var(--line) 40%);background-size:250% 100%;animation:prog 1.4s linear infinite}
+@keyframes prog{from{background-position:100% 0}to{background-position:0 0}}
+.bignum{font-family:var(--f-display);font-size:52px;line-height:1;font-weight:800}
+.status-card{text-align:center;justify-items:center;padding:22px 16px}
+.status-ic{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;background:var(--soft);color:var(--brand)}
+.status-ic svg{width:30px;height:30px}
+.status-card.done .status-ic{background:var(--ok-bg);color:var(--ok)}
+.status-card.bad .status-ic{background:var(--bad-bg);color:var(--bad)}
+</style>
+</head>
+<body class="portal">
+<header class="top"><div class="wrap">
+  <a class='logo' href='/' id='logo'></a>
+  <nav class="topnav" id="topnav" aria-label="Utama"></nav>
+  <span class="spacer"></span>
+  <button class="btn sm pri" id="accountBtn">Log masuk</button>
+</div></header>
+<main><div class="wrap" id="app"></div></main>
+<div id="foot"></div>
+<nav class="tabs" id="tabs" aria-label="Navigasi"></nav>
+<div id="layer"></div>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js" integrity="sha384-2zrRDgDHSYB/GN3nFW3fsZXoxEhKIr3N2h63Tc6DEOB9JJdFIu8xMJT2Cph/gBil" crossorigin="anonymous"></script>
+<script src="js/api.js"></script>
+<script src="js/common.js"></script>
+<script src="js/portal.js"></script>
+<script>
+const app = $('#app');
+// Navigasi portal yang sama dengan halaman utama
+$('#logo').innerHTML = LOGO + 'Segamat Kita';
+$('#foot').innerHTML = footerHTML();
+renderPortalNav('lapar');
+let USER = null;
+function avatarInner() {
+  const pic = USER.user_metadata?.avatar_url;
+  return pic ? `<img src="${esc(safeUrl(pic))}" alt="" referrerpolicy="no-referrer">` : esc((userName(USER)[0] || '?').toUpperCase());
+}
+// Butang profil yang sama dengan halaman lain (common.js)
+function renderHeader() { renderAccountBtn(); }
+// Log masuk diuruskan oleh common.js; simpan kedudukan troli supaya dibuka semula selepas balik dari Google
+window.beforeGoogle = () => store.set('laparek-resume', location.search);
+document.addEventListener('auth-changed', () => { USER = Auth.user; renderHeader(); if ($('#orderForm')) openCart(); else route(); });
+let SHOP = null, MENU = [], cart = [], otype = 'dine', presetTable = '', pollT = null, tmp = null, spy = null;
+let LIST = [], lf = { q: '', area: 'Semua', open: false };
+const F = { table: '', pickup: '', note: '', pay: 'cash', ...store.get('laparek-me', { name: '', phone: '' }) };
+
+function measure() { document.documentElement.style.setProperty('--hdr', $('header.top').offsetHeight + 'px'); }
+window.addEventListener('resize', measure);
+function go(qs) {
+  // Bila dibuka terus dari fail (file://), sesetengah pelayar tolak pushState — muat semula biasa sahaja
+  try { history.pushState(null, '', qs ? '?' + qs : location.pathname); } catch (e) { location.search = qs ? '?' + qs : ''; return; }
+  route(); window.scrollTo(0, 0);
+}
+window.addEventListener('popstate', route);
+document.addEventListener('click', (e) => {
+  const a = e.target.closest('a[data-nav]'); if (!a) return;
+  e.preventDefault(); const h = a.getAttribute('href'); go(h.startsWith('?') ? h.slice(1) : '');
+});
+
+async function route() {
+  closeSheet(); clearInterval(pollT); $('#cartbar')?.remove(); document.body.classList.remove('with-cart'); spy && spy.disconnect();
+  const p = new URLSearchParams(location.search);
+  app.classList.remove('page-enter'); void app.offsetWidth; app.classList.add('page-enter');
+  app.innerHTML = loading();
+  try {
+    if (p.get('order')) await vTrack(p.get('order'));
+    else if (p.has('orders')) await vMine();
+    else if (p.get('k')) await vShop(p.get('k'), p.get('meja'));
+    else await vList();
+  } catch (e) {
+    app.innerHTML = emptyState('alert', `${esc(e.message)}<br><button class="btn sm" style="margin-top:8px" onclick="location.reload()">Cuba lagi</button>`);
+  }
+}
+
+/* ================= Senarai kedai ================= */
+async function vList() {
+  document.title = 'Lapar Ek? · Order makan di Segamat';
+  LIST = await api.listShops();
+  app.innerHTML = `<section class="hero">
+    <svg class="river" viewBox="0 0 400 200" preserveAspectRatio="none" aria-hidden="true" fill="none" stroke="#fff" stroke-width="2"><path d="M0 110 C70 70 140 150 220 110 S350 60 400 90"/><path d="M0 135 C70 95 140 175 220 135 S350 85 400 115"/><path d="M0 160 C70 120 140 200 220 160 S350 110 400 140"/></svg>
+    <span class="sun" aria-hidden="true"></span>
+    <p class="eyebrow">Segamat · Dine-in & pickup</p>
+    <h1>Lapar Ek?</h1>
+    <p class="lede">Order terus dari kedai makan Segamat. Tiada caj tambahan, bayar terus kepada kedai.</p>
+    <div class="searchbox" style="max-width:560px">${ic('search')}<input class="input" id="lfQ" type="search" placeholder="Cari kedai atau jenis makanan" value="${esc(lf.q)}" aria-label="Cari kedai"></div>
+    <div class="hscroll"><div class="chips">
+      <button class="chip ${lf.open ? 'on' : ''}" data-lf="open"><span class="dot" style="color:#7ef0ad"></span>Terima order sekarang</button>
+      ${['Semua', ...C.AREAS].map(a => `<button class="chip ${lf.area === a ? 'on' : ''}" data-lf="area" data-v="${esc(a)}">${a === 'Semua' ? 'Semua kawasan' : esc(a)}</button>`).join('')}
+    </div></div>
+  </section>
+  <section class="block" id="shopList" aria-live="polite"></section>`;
+  renderShopList();
+}
+function renderShopList() {
+  const q = lf.q.toLowerCase().trim();
+  const rows = LIST.filter(s => (!lf.open || s.is_open) && (lf.area === 'Semua' || s.area === lf.area) && (!q || (s.name + ' ' + s.cuisine + ' ' + s.area).toLowerCase().includes(q)));
+  $('#shopList').innerHTML = rows.length
+    ? `<p class="small muted">${rows.length} kedai</p><div class="grid g3">${rows.map(shopCard).join('')}</div>`
+    : emptyState('store', LIST.length ? 'Tiada kedai sepadan. Cuba carian lain atau pilih "Semua kawasan".' : 'Belum ada kedai. <a href="peniaga.html">Jadi Partner Lapar Ek?</a>.');
+}
+function shopCard(s) {
+  return `<a class="card link shopcard ${s.is_open ? '' : 'closed'}" href="?k=${esc(s.slug)}" data-nav style="--h:${hue(s.name)}">
+    <div class="cv">${ic(foodIcon(s.cuisine), 'art')}${s.is_open ? '<span class="pill ok"><span class="dot"></span>Terima order</span>' : '<span class="pill">Tutup sementara</span>'}<span class="pill">${ic('clock')}~${s.prep_min} min</span></div>
+    <div class="bd"><h3>${esc(s.name)}</h3><span class="small muted">${esc(s.cuisine || 'Kedai makan')} · ${esc(s.area)}</span>${s.hours ? `<span class="small muted">${esc(s.hours)}</span>` : ''}</div></a>`;
+}
+
+/* ================= Page kedai ================= */
+const cartKey = () => 'laparek-cart-' + SHOP.id;
+const saveCart = () => store.set(cartKey(), cart);
+async function vShop(slug, meja) {
+  SHOP = await api.getShopBySlug(slug);
+  if (!SHOP) { app.innerHTML = emptyState('store', 'Kedai tidak dijumpai. Mungkin pautan sudah bertukar.<br><a href="./" data-nav>Lihat semua kedai</a>'); return; }
+  document.title = SHOP.name + ' · Lapar Ek?';
+  MENU = (await api.getMenu(SHOP.id)).filter(m => m.status === 'lulus');
+  cart = store.get(cartKey(), []).filter(l => MENU.some(m => m.id === l.item_id && m.available));
+  if (meja) { presetTable = meja; F.table = meja; otype = 'dine'; }
+  renderShop();
+  // Baru balik dari log masuk Google → terus buka troli semula
+  if (USER && cart.length && store.get('laparek-resume', null) === location.search) { store.del('laparek-resume'); openCart(); }
+}
+function renderShop() {
+  const s = SHOP, cats = [...new Set(MENU.map(x => x.category))], hot = MENU.filter(x => x.is_hot && x.available);
+  app.innerHTML = `<a href="./" data-nav class="btn ghost sm" style="margin-left:-10px">${ic('back')}Semua kedai</a>
+  <div class="cover" style="--h:${hue(s.name)};margin-top:6px">${ic(foodIcon(s.cuisine), 'art')}
+    <div class="row nowrap">${thumb(s.name, { icon: foodIcon(s.cuisine), cls: 'lg' })}<div class="stack" style="gap:2px">
+      <h1 style="font-size:clamp(24px,5.4vw,36px)">${esc(s.name)}</h1><span style="opacity:.85">${esc(s.cuisine || 'Kedai makan')}</span></div></div>
+    ${s.description ? `<p style="opacity:.9;max-width:56ch">${esc(s.description)}</p>` : ''}
+    <div class="meta"><span>${s.is_open ? '<span class="dot" style="color:#7ef0ad"></span>Terima order' : 'Tidak terima order sekarang'}</span>${s.hours ? `<span>${ic('clock')}${esc(s.hours)}</span>` : ''}<span>${ic('pin')}${esc(s.area)}</span><span>${ic('bowl')}Siap ~${s.prep_min} min</span>${presetTable ? `<span>${ic('dine')}Meja ${esc(presetTable)}</span>` : ''}</div>
+    ${s.phone ? `<div class="row small"><a target="_blank" rel="noopener" href="${wa(s.phone, 'Salam ' + s.name)}" class="btn sm">${ic('chat')}WhatsApp kedai</a><span class="num" style="opacity:.85">${fmtPhone(s.phone)}</span></div>` : ''}
+  </div>
+  ${!s.is_open ? `<div class="card" style="background:var(--warn-bg);border-color:transparent;color:var(--warn);margin-top:12px;gap:2px"><b>Kedai tidak terima order online sekarang.</b><span class="small">Anda masih boleh lihat menu. Cuba lagi kemudian atau WhatsApp kedai.</span></div>` : ''}
+  ${MENU.length ? `<div class="catbar"><div class="hscroll"><div class="chips" id="catChips">${hot.length ? `<button class="chip" data-jump="hot">${ic('fire')}Paling laris</button>` : ''}${cats.map(c => `<button class="chip" data-jump="${hue(c)}">${esc(c)}</button>`).join('')}</div></div></div>` : ''}
+  ${hot.length ? `<div class="menu-cat" id="cat-hot" data-key="hot"><h3>Paling laris</h3><div class="grid g2">${hot.map(menuRow).join('')}</div></div>` : ''}
+  ${cats.map(c => `<div class="menu-cat" id="cat-${hue(c)}" data-key="${hue(c)}"><h3>${esc(c)}</h3><div class="grid g2">${MENU.filter(x => x.category === c).map(menuRow).join('')}</div></div>`).join('')}
+  ${MENU.length ? '' : `<div style="margin-top:20px">${emptyState('bowl', 'Kedai ini belum letak menu.')}</div>`}
+  <div style="height:100px"></div>`;
+  measure(); setupSpy(); renderCartBar();
+}
+const qtyOf = (id) => cart.filter(l => l.item_id === id).reduce((a, l) => a + l.qty, 0);
+function menuRow(x) {
+  const q = qtyOf(x.id), hasOpt = (x.options || []).length > 0, can = x.available && SHOP.is_open;
+  let ctl = '';
+  if (!x.available) ctl = '<span class="pill">Habis</span>';
+  else if (can) {
+    if (!hasOpt && q) ctl = `<div class="stepper"><button data-q="-1" data-id="${x.id}" aria-label="Kurangkan ${esc(x.name)}">−</button><span class="num">${q}</span><button data-q="1" data-id="${x.id}" aria-label="Tambah ${esc(x.name)}">+</button></div>`;
+    else ctl = `${q ? `<span class="pill acc num">${q} dalam troli</span>` : ''}<button class="addbtn" data-add="${x.id}" aria-label="Tambah ${esc(x.name)} ke troli">${ic('plus')}</button>`;
+  }
+  return `<div class="item ${x.available ? '' : 'off'}" data-row="${x.id}"><button class="item-hit" data-open="${x.id}" ${x.available ? '' : 'disabled'}>${thumb(x.name, { img: x.image_url, icon: foodIcon(x.name, x.category) })}<div class="body"><b>${esc(x.name)}</b>${x.description ? `<span class="small muted clamp">${esc(x.description)}</span>` : ''}<span class="price num" style="font-size:16px;margin-top:2px">${rm(x.price)}${hasOpt ? '<span class="small muted" style="font-family:var(--f-body);font-weight:500"> · ada pilihan</span>' : ''}</span></div></button><div class="row nowrap" style="align-self:flex-end;gap:6px">${ctl}</div></div>`;
+}
+function refreshRows(id) {
+  const x = MENU.find(m => m.id === id);
+  $$(`[data-row="${id}"]`).forEach(r => (r.outerHTML = menuRow(x)));
+  renderCartBar(true);
+}
+function setupSpy() {
+  const chips = $$('#catChips .chip'); if (!chips.length) return;
+  spy = new IntersectionObserver((es) => es.forEach(e => {
+    if (!e.isIntersecting) return;
+    chips.forEach(c => { const on = c.dataset.jump === e.target.dataset.key; c.classList.toggle('on', on); if (on) c.scrollIntoView({ inline: 'nearest', block: 'nearest' }); });
+  }), { rootMargin: '-45% 0px -50% 0px' });
+  $$('.menu-cat').forEach(el => spy.observe(el));
+}
+
+/* ----- troli ----- */
+const lineKey = (id, choices, note) => id + '|' + JSON.stringify(Object.keys(choices).sort().map(k => [k, [...choices[k]].sort()])) + '|' + note;
+function unitPrice(item, choices) {
+  let u = Number(item.price);
+  for (const g of item.options || []) for (const c of g.choices) if ((choices[g.name] || []).includes(c.name)) u += Number(c.price) || 0;
+  return Math.round(u * 100) / 100;
+}
+function addLine(item, qty, choices = {}, note = '') {
+  const key = lineKey(item.id, choices, note);
+  const l = cart.find(x => x.key === key);
+  if (l) l.qty = Math.min(99, l.qty + qty);
+  else cart.push({ key, item_id: item.id, name: item.name, qty, unit: unitPrice(item, choices), choices, label: Object.values(choices).flat().join(', '), note });
+  cart = cart.filter(x => x.qty > 0); saveCart(); buzz(); refreshRows(item.id);
+}
+function renderCartBar(bump) {
+  let el = $('#cartbar');
+  document.body.classList.toggle('with-cart', !!(cart.length && SHOP));
+  if (!cart.length || !SHOP) { el && el.remove(); return; }
+  if (!el) { el = document.createElement('div'); el.id = 'cartbar'; el.className = 'cartbar'; document.body.appendChild(el); }
+  const n = cart.reduce((a, b) => a + b.qty, 0), t = cart.reduce((a, b) => a + b.qty * b.unit, 0);
+  el.innerHTML = `<button id="openCart"><span style="display:flex;align-items:center"><span class="cnt num">${n}</span>Lihat troli</span><span class="num row nowrap" style="gap:6px">${rm(t)}${ic('arrow')}</span></button>`;
+  if (bump) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+}
+
+/* ----- butiran item & pilihan ----- */
+function openItem(id) {
+  const x = MENU.find(m => m.id === id); if (!x) return;
+  tmp = { item: x, qty: 1, sel: {}, note: '' };
+  (x.options || []).forEach(g => { tmp.sel[g.name] = (g.required && !g.multi && g.choices[0]) ? [g.choices[0].name] : []; });
+  const can = x.available && SHOP.is_open;
+  sheet(`${sheetHead(esc(x.name))}
+    ${thumb(x.name, { img: x.image_url, icon: foodIcon(x.name, x.category), cls: 'xl' })}
+    ${x.description ? `<p class="muted">${esc(x.description)}</p>` : ''}
+    <div class="row between"><span class="price num">${rm(x.price)}</span>${x.is_hot ? `<span class="pill warn">${ic('fire')}Paling laris</span>` : ''}</div>
+    ${(x.options || []).map((g, gi) => `<fieldset class="opt" id="grp-${gi}"><legend>${esc(g.name)} ${g.required ? '<span class="pill warn">Wajib</span>' : '<span class="pill">Pilihan</span>'}${g.multi ? '<span class="small muted">boleh pilih lebih dari satu</span>' : ''}</legend>
+      ${g.choices.map(c => `<label class="radio"><input type="${g.multi ? 'checkbox' : 'radio'}" name="g${gi}" data-g="${gi}" value="${esc(c.name)}" ${tmp.sel[g.name].includes(c.name) ? 'checked' : ''}><span class="grow">${esc(c.name)}</span><span class="small muted num">${Number(c.price) ? '+' + rm(c.price) : 'Percuma'}</span></label>`).join('')}
+      ${!g.required && !g.multi ? `<label class="radio"><input type="radio" name="g${gi}" data-g="${gi}" value="" ${tmp.sel[g.name].length ? '' : 'checked'}><span class="grow muted">Tiada</span></label>` : ''}
+    </fieldset>`).join('')}
+    <div class="field"><label for="itNote">Nota untuk item ini (pilihan)</label><input class="input" id="itNote" maxlength="120" placeholder="Contoh: kurang pedas, tak nak timun"></div>
+    <div id="itErr"></div>
+    <div class="sticky-foot"><div class="row nowrap between"><div class="stepper"><button data-t="-1" aria-label="Kurang">−</button><span class="num" id="tQty">1</span><button data-t="1" aria-label="Tambah">+</button></div>
+    <button class="btn pri lg" style="flex:1" id="tAdd" ${can ? '' : 'disabled'}></button></div></div>`);
+  updTmp();
+}
+function updTmp() {
+  $('#tQty').textContent = tmp.qty;
+  const can = tmp.item.available && SHOP.is_open;
+  $('#tAdd').textContent = can ? 'Tambah · ' + rm(unitPrice(tmp.item, tmp.sel) * tmp.qty) : 'Kedai tidak terima order';
+}
+function confirmItem() {
+  const x = tmp.item;
+  const missing = (x.options || []).findIndex(g => g.required && !(tmp.sel[g.name] || []).length);
+  if (missing >= 0) {
+    $('#itErr').innerHTML = `<div class="err">${ic('alert')}Sila pilih ${esc(x.options[missing].name)}.</div>`;
+    $('#grp-' + missing).scrollIntoView({ behavior: 'smooth', block: 'center' }); return;
+  }
+  const choices = {}; Object.entries(tmp.sel).forEach(([k, v]) => { if (v.length) choices[k] = v; });
+  addLine(x, tmp.qty, choices, $('#itNote').value.trim());
+  closeSheet(); toast('Ditambah ke troli');
+}
+
+/* ----- checkout ----- */
+function pickupTimes() {
+  const out = [], d = new Date(); d.setMinutes(Math.ceil((d.getMinutes() + SHOP.prep_min + 10) / 15) * 15, 0, 0);
+  for (let i = 0; i < 10; i++) { out.push(fmtTime(d)); d.setMinutes(d.getMinutes() + 15); }
+  return out;
+}
+function openCart() {
+  if (!cart.length) { closeSheet(); return; }
+  const t = cart.reduce((a, b) => a + b.qty * b.unit, 0), s = SHOP;
+  sheet(`${sheetHead(esc(s.name), 'Troli')}
+  <div class="step"><div class="step-h"><i>1</i>Pesanan anda</div>
+  <div class="list">${cart.map(l => `<div class="row between nowrap"><div style="min-width:0"><b>${esc(l.name)}</b><div class="small muted">${rm(l.unit)}${l.label ? ' · ' + esc(l.label) : ''}${l.note ? ' · “' + esc(l.note) + '”' : ''}</div></div>
+    <div class="row nowrap"><div class="stepper"><button data-cl="-1" data-key="${esc(l.key)}" aria-label="Kurang">−</button><span class="num">${l.qty}</span><button data-cl="1" data-key="${esc(l.key)}" aria-label="Tambah">+</button></div><b class="num" style="min-width:68px;text-align:right">${rm(l.qty * l.unit)}</b></div></div>`).join('')}</div></div>
+  <form id="orderForm" class="stack" style="gap:18px" novalidate>
+    <div class="step"><div class="step-h"><i>2</i>Cara terima</div>
+    <div class="seg"><button type="button" class="${otype === 'dine' ? 'on' : ''}" data-otype="dine">${ic('dine')}Dine-in</button><button type="button" class="${otype === 'pickup' ? 'on' : ''}" data-otype="pickup">${ic('bagup')}Pickup / Tapau</button></div>
+    ${otype === 'dine'
+      ? `<div class="field"><label for="oTable">No. meja</label><input class="input" id="oTable" data-f="table" inputmode="numeric" maxlength="10" placeholder="Nombor di sebelah QR meja" value="${esc(F.table)}"></div>`
+      : `<div class="field"><label for="oTime">Masa ambil</label><select class="input" id="oTime" data-f="pickup"><option value="Secepat mungkin">Secepat mungkin (~${s.prep_min + 5} min)</option>${pickupTimes().map(t => `<option ${F.pickup === t ? 'selected' : ''}>${t}</option>`).join('')}</select></div>`}</div>
+    <div class="step"><div class="step-h"><i>3</i>Butiran & bayaran</div>
+    <div class="frow two"><div class="field"><label for="oName">Nama</label><input class="input" id="oName" data-f="name" maxlength="60" autocomplete="name" placeholder="Nama anda" value="${esc(F.name)}"></div>
+    <div class="field"><label for="oPhone">No. telefon${otype === 'dine' ? ' (pilihan)' : ''}</label><input class="input" id="oPhone" data-f="phone" maxlength="20" inputmode="tel" autocomplete="tel" placeholder="012-345 6789" value="${esc(F.phone)}"></div></div>
+    <div class="field"><label for="oNote">Nota untuk kedai (pilihan)</label><input class="input" id="oNote" data-f="note" maxlength="200" placeholder="Contoh: semua kurang pedas" value="${esc(F.note)}"></div>
+    <div class="stack" role="radiogroup" aria-label="Cara bayaran">
+      <label class="radio"><input type="radio" name="pay" value="cash" ${F.pay === 'cash' ? 'checked' : ''}><span class="grow"><b>Tunai di kaunter</b><br><span class="small muted">Bayar bila ambil atau selepas makan</span></span></label>
+      <label class="radio"><input type="radio" name="pay" value="duitnow" ${F.pay === 'duitnow' ? 'checked' : ''}><span class="grow"><b>DuitNow QR</b><br><span class="small muted">${s.duitnow_url ? 'QR kedai akan dipaparkan selepas order' : 'Imbas QR DuitNow di kaunter kedai'}</span></span></label></div></div>
+    <div id="orderErr"></div>
+    <div class="sticky-foot"><div class="row between"><span class="muted">Jumlah · tiada caj tambahan</span><b class="price num">${rm(t)}</b></div>
+    ${!s.is_open ? '<button class="btn pri lg block" disabled>Kedai tidak terima order</button>'
+      : USER ? `<button class="btn pri lg block" id="placeBtn">Hantar order</button><span class="small muted" style="text-align:center">Order sebagai <b>${esc(USER.email || userName(USER))}</b> · <button type="button" class="btn ghost sm" data-logout style="min-height:0;padding:2px 6px">Tukar akaun</button></span>`
+      : `<span class="small muted" style="text-align:center">Log masuk sekali sahaja. Troli anda disimpan.</span>${googleBtn('Log masuk dengan Google untuk order')}`}</div>
+  </form>`, { keepScroll: !!$('#layer .sheet') });
+}
+async function placeOrder() {
+  const btn = $('#placeBtn'), errEl = $('#orderErr');
+  errEl.innerHTML = '';
+  const fail = (m) => { errEl.innerHTML = `<div class="err">${ic('alert')}${esc(m)}</div>`; errEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); };
+  if (!F.name.trim()) return fail('Sila isi nama anda.');
+  if (otype === 'dine' && !F.table.trim()) return fail('Sila isi no. meja.');
+  if (otype === 'pickup' && !F.phone.trim()) return fail('Sila isi no. telefon supaya kedai boleh hubungi anda.');
+  btn.setAttribute('aria-busy', 'true'); btn.disabled = true; btn.innerHTML = '<span class="spin"></span>Menghantar…';
+  try {
+    const r = await api.placeOrder({
+      shop_id: SHOP.id, type: otype, table: otype === 'dine' ? F.table.trim() : '', pickup: otype === 'pickup' ? (F.pickup || 'Secepat mungkin') : '',
+      name: F.name.trim(), phone: F.phone.trim(), note: F.note.trim(), pay: F.pay,
+      items: cart.map(l => ({ item_id: l.item_id, qty: l.qty, note: l.note, choices: l.choices }))
+    });
+    store.set('laparek-me', { name: F.name.trim(), phone: F.phone.trim() });
+    store.set('laparek-orders', [{ token: r.token, id: r.id, shop: SHOP.name, at: new Date().toISOString() }, ...store.get('laparek-orders', [])].slice(0, 30));
+    cart = []; saveCart(); F.note = '';
+    go('order=' + encodeURIComponent(r.token));
+  } catch (e) {
+    btn.removeAttribute('aria-busy'); btn.disabled = false; btn.textContent = 'Hantar order';
+    if (/log masuk/i.test(e.message)) { USER = null; renderHeader(); openCart(); return; }
+    fail(e.message);
+    if (/habis|tiada/i.test(e.message)) { MENU = (await api.getMenu(SHOP.id)).filter(m => m.status === 'lulus'); }
+  }
+}
+
+/* ================= Jejak order ================= */
+const STEPS = ['baru', 'diterima', 'siap', 'selesai'];
+const STATUS_LONG = { baru: 'Menunggu kedai terima order', diterima: 'Kedai sedang sediakan makanan', siap: 'Siap!', selesai: 'Selesai. Terima kasih!', batal: 'Order dibatalkan oleh kedai' };
+async function vTrack(token) {
+  let o = await api.getOrder(token);
+  if (!o) { app.innerHTML = emptyState('receipt', 'Order tidak dijumpai.<br><a href="./" data-nav>Kembali ke senarai kedai</a>'); return; }
+  document.title = `Order #${o.id} · Lapar Ek?`;
+  const paint = () => {
+    const idx = STEPS.indexOf(o.status), final = ['selesai', 'batal'].includes(o.status);
+    const eta = new Date(new Date(o.created_at).getTime() + (o.shop.prep_min || 15) * 60000);
+    const siapText = o.order_type === 'dine' ? 'Makanan sedang dihantar ke meja anda.' : 'Sila ambil di kaunter.';
+    const msg = `Order #${o.id} (Lapar Ek?)\n${o.order_type === 'dine' ? 'Dine-in, meja ' + o.table_no : 'Pickup: ' + o.pickup_time}\n${o.items.map(i => `${i.qty}x ${i.name}${i.options?.length ? ' (' + i.options.join(', ') + ')' : ''}`).join('\n')}\nJumlah: ${rm(o.total)}\nNama: ${o.customer_name}`;
+    app.innerHTML = `<a href="?k=${esc(o.shop.slug)}" data-nav class="btn ghost sm" style="margin-left:-10px">${ic('back')}${esc(o.shop.name)}</a>
+    <div class="grid g2" style="margin-top:8px;align-items:start">
+      <div class="stack" style="gap:12px">
+        <div class="card status-card ${o.status === 'siap' || o.status === 'selesai' ? 'done' : o.status === 'batal' ? 'bad' : ''}">
+          <div class="status-ic">${ic(o.status === 'batal' ? 'x' : o.status === 'siap' || o.status === 'selesai' ? 'check' : o.status === 'diterima' ? 'bowl' : 'clock')}</div>
+          <h2>${STATUS_LONG[o.status]}</h2>
+          ${o.status === 'siap' ? `<p class="muted">${siapText}</p>` : ''}
+          ${['baru', 'diterima'].includes(o.status) ? `<p class="muted">Anggaran siap sekitar <b class="num">${o.order_type === 'pickup' && o.pickup_time && o.pickup_time !== 'Secepat mungkin' ? esc(o.pickup_time) : fmtTime(eta)}</b>. Page ini dikemas kini sendiri.</p>` : ''}
+          ${o.status === 'batal' ? `<p class="muted">Sila hubungi kedai untuk maklumat lanjut.</p>` : ''}
+          ${o.status !== 'batal' ? `<div class="track" style="width:100%">${STEPS.map((st, i) => `<div class="${i < idx || o.status === 'selesai' ? 'done' : i === idx ? 'now' : ''}">${STATUS[st]}</div>`).join('')}</div>` : ''}
+        </div>
+        ${o.pay_method === 'duitnow' && !final ? `<div class="card" style="justify-items:center;text-align:center"><h3>Bayar dengan DuitNow</h3>${o.shop.duitnow_url ? `<div class="qrbox"><img src="${esc(safeUrl(o.shop.duitnow_url))}" alt="QR DuitNow ${esc(o.shop.name)}" width="200"></div><p class="small muted">Imbas dengan app bank atau e-wallet. Masukkan <b class="num">${rm(o.total)}</b> dan tunjuk resit di kaunter.</p>` : `<p class="small muted">Imbas QR DuitNow di kaunter kedai. Jumlah <b class="num">${rm(o.total)}</b>.</p>`}</div>` : ''}
+      </div>
+      <div class="card">
+        <div class="row between"><div><p class="eyebrow">No. order</p><span class="bignum num">#${o.id}</span></div><span class="pill acc">${o.order_type === 'dine' ? ic('dine') + 'Meja ' + esc(o.table_no) : ic('bagup') + 'Pickup · ' + esc(o.pickup_time)}</span></div>
+        <div class="list" style="gap:8px">${o.items.map(i => `<div class="row between nowrap"><div style="min-width:0"><b class="num">${i.qty}×</b> ${esc(i.name)}${i.options?.length ? `<div class="small muted">${esc(i.options.join(', '))}</div>` : ''}${i.note ? `<div class="small" style="color:var(--warn)">“${esc(i.note)}”</div>` : ''}</div><span class="num">${rm(i.qty * i.unit)}</span></div>`).join('')}</div>
+        <div class="row between" style="border-top:1px dashed var(--line);padding-top:10px"><span class="muted">Jumlah · ${PAY[o.pay_method]}</span><b class="price num">${rm(o.total)}</b></div>
+        <span class="small muted">Dibuat ${fmtTime(o.created_at)} oleh ${esc(o.customer_name)}</span>
+        ${o.shop.phone ? `<div class="stack"><a class="btn wa" target="_blank" rel="noopener" href="${wa(o.shop.phone, msg)}">${ic('chat')}Hantar salinan ke WhatsApp kedai</a><span class="small muted" style="text-align:center">Kedai: <span class="num">${fmtPhone(o.shop.phone)}</span></span></div>` : ''}
+        <a class="btn" href="?k=${esc(o.shop.slug)}" data-nav>Order lagi dari ${esc(o.shop.name)}</a>
+      </div>
+    </div>`;
+  };
+  paint();
+  if (!['selesai', 'batal'].includes(o.status)) {
+    pollT = setInterval(async () => {
+      try {
+        const n = await api.getOrder(token);
+        if (n && n.status !== o.status) { o = n; paint(); buzz(); toast('Status: ' + STATUS_LONG[o.status]); if (['selesai', 'batal'].includes(o.status)) clearInterval(pollT); }
+      } catch (e) {}
+    }, 8000);
+  }
+}
+
+/* ================= Order saya ================= */
+async function vMine() {
+  document.title = 'Order saya · Lapar Ek?';
+  if (!USER) {
+    app.innerHTML = `<div class="card" style="max-width:440px;margin:6vh auto 0;text-align:center;justify-items:center;padding:24px;gap:12px">
+      <div class="thumb lg" style="--h:40">${ic('receipt', '')}</div><h1 style="font-size:28px">Order saya</h1>
+      <p class="muted">Log masuk untuk lihat semua order anda, dari mana-mana telefon.</p>${googleBtn()}</div>`;
+    return;
+  }
+  const orders = await api.myOrders();
+  const acct = `<div class="card" style="padding:12px 14px"><div class="row between nowrap"><div class="row nowrap" style="min-width:0"><span class="avatar">${avatarInner()}</span><div class="stack" style="gap:0;min-width:0"><b>${esc(userName(USER))}</b><span class="small muted" style="overflow:hidden;text-overflow:ellipsis">${esc(USER.email || '')}</span></div></div><button class="btn sm" data-logout>Log keluar</button></div></div>`;
+  if (!orders.length) { app.innerHTML = `<h1>Order saya</h1><div class="stack" style="margin-top:16px;gap:14px">${acct}${emptyState('receipt', 'Belum ada order. <a href="./" data-nav>Lapar Ek? Pilih kedai</a>')}</div>`; return; }
+  const rows = orders.map(o => ({ s: { token: o.token }, o }));
+  app.innerHTML = `<div class="stack"><p class="eyebrow">Akaun anda</p><h1>Order saya</h1></div>
+  <section class="block">${acct}<div class="list">${rows.map(({ s, o }) => `<a class="card link" href="?order=${encodeURIComponent(s.token)}" data-nav>
+    <div class="row between nowrap"><div class="row nowrap">${thumb(o.shop.name, { cls: 'sm', icon: 'bowl' })}<div class="stack" style="gap:0"><b>${esc(o.shop.name)}</b><span class="small muted">#${o.id} · ${fmtDate(o.created_at)} ${fmtTime(o.created_at)}</span></div></div>
+    <span class="pill ${o.status === 'batal' ? 'bad' : o.status === 'siap' ? 'ok' : o.status === 'selesai' ? '' : 'warn'}">${STATUS[o.status]}</span></div>
+    <div class="row between small"><span class="muted clamp" style="-webkit-line-clamp:1">${o.items.map(i => i.qty + '× ' + esc(i.name)).join(', ')}</span><b class="num">${rm(o.total)}</b></div></a>`).join('')}</div></section>`;
+}
+
+/* ================= Event ================= */
+document.addEventListener('click', async (e) => {
+  const t = e.target;
+  const lfb = t.closest('[data-lf]');
+  if (lfb) { if (lfb.dataset.lf === 'open') { lf.open = !lf.open; lfb.classList.toggle('on', lf.open); } else { lf.area = lfb.dataset.v; $$('[data-lf=area]').forEach(b => b.classList.toggle('on', b.dataset.v === lf.area)); } renderShopList(); return; }
+  const j = t.closest('[data-jump]'); if (j) { $('#cat-' + j.dataset.jump)?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion:reduce)').matches ? 'auto' : 'smooth', block: 'start' }); return; }
+  const op = t.closest('[data-open]'); if (op) { openItem(op.dataset.open); return; }
+  const ad = t.closest('[data-add]');
+  if (ad) { const x = MENU.find(m => m.id === ad.dataset.add); if ((x.options || []).length) openItem(x.id); else addLine(x, 1); return; }
+  const qb = t.closest('[data-q]');
+  if (qb) { const x = MENU.find(m => m.id === qb.dataset.id); addLine(x, +qb.dataset.q); return; }
+  const tb = t.closest('[data-t]'); if (tb) { tmp.qty = Math.max(1, Math.min(99, tmp.qty + +tb.dataset.t)); updTmp(); return; }
+  if (t.closest('#tAdd')) { confirmItem(); return; }
+  if (t.closest('#openCart')) { openCart(); return; }
+  const cl = t.closest('[data-cl]');
+  if (cl) { const l = cart.find(x => x.key === cl.dataset.key); l.qty = Math.max(0, Math.min(99, l.qty + +cl.dataset.cl)); cart = cart.filter(x => x.qty > 0); saveCart(); refreshRows(l.item_id); openCart(); return; }
+  const ot = t.closest('[data-otype]'); if (ot) { otype = ot.dataset.otype; openCart(); return; }
+});
+document.addEventListener('input', (e) => {
+  const t = e.target;
+  if (t.id === 'lfQ') { lf.q = t.value; renderShopList(); }
+  if (t.dataset.f) F[t.dataset.f] = t.value;
+});
+document.addEventListener('change', (e) => {
+  const t = e.target;
+  if (t.name === 'pay') F.pay = t.value;
+  if (t.dataset.f) F[t.dataset.f] = t.value;
+  if (t.dataset.g !== undefined && tmp) {
+    const g = tmp.item.options[+t.dataset.g];
+    tmp.sel[g.name] = g.multi ? $$(`input[name=g${t.dataset.g}]:checked`).map(i => i.value) : (t.value ? [t.value] : []);
+    $('#itErr').innerHTML = ''; updTmp();
+  }
+});
+document.addEventListener('submit', (e) => { if (e.target.id === 'orderForm') { e.preventDefault(); placeOrder(); } });
+
+if (demoBanner()) {
+  measure();
+  initAuth().then(() => { USER = Auth.user; if (USER && !F.name) F.name = Auth.name(); }).catch(() => {}).finally(() => { renderHeader(); route(); });
+}
+</script>
+</body>
+</html>
+<script async src="/.netlify/scripts/hud?variant=public" data-nf-variant="public" data-netlify-site-id="1b819d4e-6353-48d8-8790-399d1727896c" data-app-host="app.netlify.com" data-account-tier="free"></script>

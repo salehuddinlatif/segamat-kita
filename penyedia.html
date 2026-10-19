@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<!-- This site is hosted on Netlify. Anyone can build and deploy a site
+     like this one for free: https://netlify.new/?utm_campaign=loops&utm_source=ai-legible&utm_medium=owned&utm_content=comment&utm_id=1b819d4e-6353-48d8-8790-399d1727896c
+     Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e5846">
+<title>Dashboard Penyedia Servis · Segamat Kita</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="css/ui.css">
+<link rel="stylesheet" href="css/portal.css">
+<style>.auth{max-width:460px;margin:4vh auto 0;display:grid;gap:16px}.auth .card{padding:22px;gap:14px}</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class='logo' href='/' id='logo'></a>
+  <span class="spacer"></span>
+  <span id="headActions" class="row nowrap" style="gap:8px"></span>
+</div></header>
+<main><div class="wrap" id="app"></div></main>
+<div id="layer"></div>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js" integrity="sha384-2zrRDgDHSYB/GN3nFW3fsZXoxEhKIr3N2h63Tc6DEOB9JJdFIu8xMJT2Cph/gBil" crossorigin="anonymous"></script>
+<script src="js/api.js"></script>
+<script src="js/common.js"></script>
+<script src="js/portal.js"></script>
+<script>
+const app = $('#app');
+$('#logo').innerHTML = LOGO + '<span>Segamat Kita <span class="muted small" style="font-family:var(--f-body);font-weight:600">Marketplace</span></span>';
+let PROV = null, LISTINGS = [], QUOTES = [], VERIFY = null, tab = 'permintaan', editing = null;
+// Butang ke Marketplace + profil (ikon vendor ikut status penyedia terkini)
+function headActions() {
+  Auth.provider = PROV;
+  $('#headActions').innerHTML = `<a class="btn sm hide-sm" href="index.html#market">${ic('market')}Marketplace</a><button id="accountBtn"></button>`;
+  renderAccountBtn();
+}
+const fail = (box, m) => { $(box).innerHTML = `<div class="err">${ic('alert')}${esc(m)}</div>`; };
+
+/* ================= Mula ================= */
+async function init() {
+  app.innerHTML = loading();
+  try {
+    await initAuth();
+    if (!Auth.user) return vAuth();
+    // Satu akaun untuk semua: sesiapa yang log masuk boleh mohon jadi partner.
+    // Dashboard hanya dibuka selepas permohonan diluluskan admin.
+    PROV = Auth.provider;
+    headActions();
+    if (!PROV || PROV.status !== 'lulus') return vRegister();
+    await reload();
+    render();
+  } catch (e) { app.innerHTML = emptyState('alert', esc(e.message) + '<br><button class="btn sm" style="margin-top:8px" onclick="location.reload()">Cuba lagi</button>'); }
+}
+async function reload() {
+  [LISTINGS, QUOTES, VERIFY] = await Promise.all([api.myListings(PROV.id), api.myQuotes(PROV.id), api.myVerify(PROV.id)]);
+}
+document.addEventListener('auth-changed', init);
+
+function vAuth() {
+  $('#headActions').innerHTML = '';
+  app.innerHTML = `<div class="auth">
+    <div class="stack" style="text-align:center;justify-items:center"><div class="thumb lg" style="--h:200">${ic('market', '')}</div><h1 style="font-size:30px">Partner Marketplace</h1>
+    <p class="muted">Ejen Coway, Cuckoo, takaful, tukang dan servis lain. Log masuk dengan akaun Google untuk mohon jadi partner atau buka dashboard. Selepas diluluskan: iklankan servis dan terima permintaan sebut harga.</p></div>
+    <div class="card">${googleBtn('Teruskan dengan Google')}<p class="small muted" style="text-align:center">Hanya akaun Google dengan email yang disahkan boleh log masuk.</p></div>
+    ${api.mode === 'demo' ? `<div class="note-box small"><b>Mod demo:</b> pilih <b>Siti Aisyah (ejen contoh)</b> untuk urus akaun ejen Coway, atau <b>Pengguna Demo</b> untuk cuba daftar sebagai penyedia baru.</div>` : ''}
+    <a class="btn ghost sm" href="index.html" style="justify-self:center">${ic('back')}Ke Segamat Kita</a></div>`;
+}
+// Permohonan Partner Marketplace: borang baru, atau status permohonan yang sedang disemak / ditolak
+function vRegister() {
+  const p = PROV, v = (k, d = '') => esc(p ? p[k] || '' : d);
+  const head = !p
+    ? `<p class="eyebrow">Partner Marketplace</p><h1 style="font-size:clamp(24px,5vw,34px)">Mohon jadi Partner Marketplace</h1>
+       <p class="muted">Akaun pengguna adalah percuma. Untuk iklankan servis di Marketplace, permohonan anda perlu diluluskan oleh admin. Selepas diluluskan, dashboard untuk listing dan permintaan sebut harga akan dibuka.</p>`
+    : p.status === 'tolak'
+    ? `<div class="banner-note no"><b>Permohonan ditolak</b><span class="small">${esc(p.reason || 'Sila hubungi admin Segamat Kita.')}</span></div>
+       <h1 style="font-size:28px">Betulkan dan hantar semula</h1><p class="muted">Kemas kini maklumat di bawah. Admin akan semak semula permohonan anda.</p>`
+    : `<div class="banner-note wait"><b>Permohonan sedang disemak</b><span class="small">Admin akan semak maklumat anda, mungkin dengan menghubungi anda melalui WhatsApp. Dashboard akan dibuka selepas diluluskan.</span></div>
+       <h1 style="font-size:28px">Permohonan Partner Marketplace</h1><p class="muted">Dihantar pada ${fmtDate(p.created_at)}. Anda masih boleh betulkan maklumat di bawah.</p>
+       <button type="button" class="btn sm" id="recheck" style="justify-self:start">Semak status</button>`;
+  app.innerHTML = `<div class="auth" style="max-width:620px">
+    <div class="stack">${head}</div>
+    <form id="regForm" class="card stack" style="gap:12px" novalidate>
+      <div class="frow two"><div class="field"><label for="rgName">Nama penuh / nama syarikat</label><input class="input" id="rgName" maxlength="80" value="${p ? v('name') : esc(Auth.name())}"></div>
+      <div class="field"><label for="rgRole">Peranan</label><input class="input" id="rgRole" maxlength="60" value="${v('role')}" placeholder="Contoh: Ejen Coway, Pendawai elektrik"></div></div>
+      <div class="frow two"><div class="field"><label for="rgPhone">No. WhatsApp</label><input class="input" id="rgPhone" inputmode="tel" value="${v('phone')}" placeholder="012-700 0001"></div>
+      <div class="field"><label for="rgArea">Kawasan liputan</label><input class="input" id="rgArea" value="${v('area', 'Seluruh Segamat')}"></div></div>
+      <div class="field"><label for="rgAbout">Ringkasan servis</label><textarea class="input" id="rgAbout" maxlength="400" placeholder="Apa servis anda, pengalaman, sijil atau syarikat yang diwakili">${v('about')}</textarea></div>
+      ${p ? '' : `<label class="row nowrap small" style="gap:10px;align-items:flex-start"><input type="checkbox" id="rgAgree" style="margin-top:3px">Saya mengesahkan maklumat ini benar dan bersetuju dengan Terma penggunaan Segamat Kita.</label>`}
+      <div id="regErr"></div>
+      <button class="btn pri lg block">${!p ? 'Hantar permohonan' : p.status === 'tolak' ? 'Hantar semula permohonan' : 'Simpan perubahan'}</button></form></div>`;
+}
+
+/* ================= Dashboard ================= */
+function statusBanner() { return ''; }
+function render() {
+  headActions();
+  const nNew = QUOTES.filter(q => q.status === 'baru').length;
+  document.title = (nNew ? `(${nNew}) ` : '') + 'Penyedia servis · ' + PROV.name;
+  const tabs = [['permintaan', 'Permintaan', 'chat', nNew], ['listing', 'Listing saya', 'market'], ['profil', 'Profil', 'store']];
+  app.innerHTML = `<div class="row nowrap">${thumb(PROV.name, { icon: 'store', cls: 'lg' })}<div class="stack" style="gap:2px;min-width:0"><p class="eyebrow">Dashboard Partner Marketplace</p><h1 style="font-size:clamp(22px,5vw,32px)">${esc(PROV.name)}</h1>
+    <span class="small muted">${esc(PROV.role)} ${PROV.verified ? `<span class="verified">${ic('tick')}Disahkan</span>` : ''}</span></div></div>
+  ${statusBanner()}
+  <div class="dash-tabs" role="tablist">${tabs.map(([k, l, i, b]) => `<button role="tab" aria-selected="${tab === k}" class="${tab === k ? 'on' : ''}" data-tab="${k}">${ic(i)}${l}${b ? `<span class="badge">${b}</span>` : ''}</button>`).join('')}</div>
+  <section class="block" style="margin-top:18px">${({ permintaan: tQuotes, listing: tListings, profil: tProfile })[tab]()}</section>`;
+}
+function tQuotes() {
+  return `<div class="sec-head"><h2>Permintaan sebut harga</h2><span class="small muted">Dari pelanggan yang tekan "Minta sebut harga" pada listing anda</span></div>
+  ${QUOTES.length ? `<div class="grid g2">${QUOTES.map(q => `<div class="card order ${q.status === 'baru' ? 'st-baru' : 'st-siap'}">
+    <div class="row between"><b>${esc(q.name)}</b><span class="pill ${q.status === 'baru' ? 'bad' : 'ok'}">${q.status === 'baru' ? 'Baru' : 'Dibalas'}</span></div>
+    <span class="small muted">Untuk: ${esc(q.listing?.title || 'listing dibuang')} · ${ago(q.created_at)}</span>
+    <p style="white-space:pre-line">${esc(q.need)}</p>
+    <span class="small">${ic('pin')} ${esc(q.area)} · <span class="num">${esc(q.phone)}</span></span>
+    <div class="row"><a class="btn wa sm" target="_blank" rel="noopener" href="${wa(normPh(q.phone), 'Salam ' + q.name + ', saya ' + PROV.name + ' dari Segamat Kita tentang permintaan anda: ' + (q.listing?.title || ''))}">${ic('chat')}Balas di WhatsApp</a>
+    ${q.status === 'baru' ? `<button class="btn sm" data-qdone="${q.id}">${ic('check')}Tanda dibalas</button>` : ''}</div></div>`).join('')}</div>`
+    : emptyState('chat', 'Belum ada permintaan. Ia akan muncul di sini bila pelanggan tekan "Minta sebut harga" pada listing anda.')}`;
+}
+function tListings() {
+  const e = editing ? LISTINGS.find(l => l.id === editing) : null;
+  return `<div class="grid g2" style="align-items:start">
+  <div class="stack" style="gap:10px"><h3>Listing anda (${LISTINGS.length})</h3>
+   ${LISTINGS.map(l => `<div class="item"><div class="body"><div class="row between nowrap"><b>${esc(l.title)}</b>${statusPill(l.status)}</div>
+     <span class="small muted">${esc(l.price)}${esc(l.unit)} · ${esc(l.cat)}</span>${l.status === 'tolak' && l.reason ? `<span class="small" style="color:var(--bad)">Sebab: ${esc(l.reason)}</span>` : ''}
+     <div class="row between" style="margin-top:6px"><label class="row nowrap small" style="gap:8px;cursor:pointer"><span class="toggle"><input type="checkbox" data-hide="${l.id}" ${l.hidden ? '' : 'checked'} aria-label="Papar ${esc(l.title)}"><span></span></span>${l.hidden ? 'Disembunyikan' : 'Dipaparkan'}</label>
+     <div class="row" style="gap:6px"><button class="btn sm" data-edit="${l.id}">${ic('edit')}Edit</button><button class="btn sm ghost" data-del="${l.id}" aria-label="Buang">${ic('trash')}</button></div></div></div></div>`).join('') || emptyState('market', 'Belum ada listing. Isi borang untuk iklan pertama anda.')}
+  </div>
+  <form id="listingForm" class="card stack" style="gap:12px" novalidate><h3>${e ? 'Edit listing' : 'Listing baru'}</h3>
+   <div class="field"><label for="lTitle">Tajuk</label><input class="input" id="lTitle" maxlength="100" value="${esc(e?.title || '')}" placeholder="Contoh: Penapis air Coway, sewa bulanan"></div>
+   <div class="frow two"><div class="field"><label for="lCat">Kategori</label><select class="input" id="lCat">${MK_CATS.map(c => `<option ${e?.cat === c ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
+   <div class="field"><label for="lPrice">Harga</label><input class="input" id="lPrice" value="${esc(e?.price || '')}" placeholder="Dari RM 60"></div></div>
+   <div class="frow two"><div class="field"><label for="lUnit">Unit (pilihan)</label><input class="input" id="lUnit" value="${esc(e?.unit || '')}" placeholder="/bulan"></div>
+   <div class="field"><label for="lArea">Kawasan liputan</label><input class="input" id="lArea" value="${esc(e?.area || PROV.area || 'Seluruh Segamat')}"></div></div>
+   <div class="field"><label for="lDesc">Penerangan</label><textarea class="input" id="lDesc" maxlength="600">${esc(e?.descr || '')}</textarea></div>
+   <div class="field"><label for="lInc">Apa yang termasuk (satu baris satu perkara)</label><textarea class="input" id="lInc" placeholder="Pemasangan percuma&#10;Servis setiap 4 bulan">${esc((e?.inc || []).join('\n'))}</textarea></div>
+   <p class="small muted">${e ? 'Perubahan pada isi listing akan disemak semula oleh admin.' : 'Listing baru disemak oleh admin sebelum dipaparkan.'}</p>
+   <div id="lErr"></div>
+   <div class="row"><button class="btn pri lg" style="flex:1">${e ? 'Simpan & hantar semula' : 'Hantar untuk semakan'}</button>${e ? '<button type="button" class="btn lg" data-cancel-edit>Batal</button>' : ''}</div></form></div>`;
+}
+function tProfile() {
+  const v = VERIFY;
+  const badge = PROV.verified ? `<b class="verified">${ic('tick')}Akaun disahkan</b><span class="small muted">Lencana Disahkan dipaparkan pada semua listing anda.</span>`
+    : v?.status === 'menunggu' ? `<b>Permohonan lencana sedang disemak</b><span class="small muted">Admin akan semak dokumen anda dan hubungi anda melalui WhatsApp jika perlu.</span>`
+    : `<b>Dapatkan lencana Disahkan</b><span class="small muted">Hantar gambar IC dan kad ejen atau sijil. Listing yang disahkan dipaparkan dahulu dalam Marketplace.</span>
+       ${v?.status === 'tolak' ? `<span class="small" style="color:var(--bad)">Permohonan lepas ditolak: ${esc(v.reason || '')}</span>` : ''}
+       <button type="button" class="btn sm pri" style="justify-self:start;margin-top:6px" data-verify>${ic('tick')}Mohon lencana Disahkan</button>`;
+  return `<form id="profileForm" class="card stack" style="gap:14px;max-width:640px" novalidate>
+   <div class="frow two"><div class="field"><label for="pvName">Nama</label><input class="input" id="pvName" value="${esc(PROV.name)}"></div>
+   <div class="field"><label for="pvRole">Peranan</label><input class="input" id="pvRole" value="${esc(PROV.role)}"></div></div>
+   <div class="frow two"><div class="field"><label for="pvPhone">No. WhatsApp</label><input class="input num" id="pvPhone" inputmode="tel" value="${esc(PROV.phone)}"></div>
+   <div class="field"><label for="pvArea">Kawasan liputan</label><input class="input" id="pvArea" value="${esc(PROV.area)}"></div></div>
+   <div class="field"><label for="pvAbout">Ringkasan servis</label><textarea class="input" id="pvAbout" maxlength="400">${esc(PROV.about || '')}</textarea></div>
+   <div class="card" style="background:var(--soft);border-color:transparent;gap:4px">${badge}</div>
+   <div id="pErr"></div>
+   <button class="btn pri lg">Simpan profil</button></form>
+   <p class="small muted">Log masuk sebagai ${esc(Auth.user.email)}</p>`;
+}
+function openVerify() {
+  sheet(`${sheetHead('Mohon lencana Disahkan')}
+  <p class="small muted">Dokumen hanya dilihat oleh admin dan <b>dipadam selepas semakan</b>.</p>
+  <form id="verifyForm" class="stack" style="gap:12px">
+   <div class="field"><label for="vfDocs">Gambar IC dan kad ejen / sijil (maksimum 3)</label><input class="input" id="vfDocs" type="file" accept="image/*" multiple required><div id="vfPrev" class="row" style="gap:6px"></div></div>
+   <div class="field"><label for="vfNote">Nota untuk admin (pilihan)</label><textarea class="input" id="vfNote" maxlength="300" placeholder="Contoh: Ejen Coway sejak 2021, no. ejen 12345"></textarea></div>
+   <p class="small muted">Tip: anda boleh tutup nombor IC kecuali 4 digit terakhir.</p>
+   <div id="vErr"></div>
+   <button class="btn pri lg block">Hantar permohonan</button></form>`);
+}
+
+/* ================= Event ================= */
+document.addEventListener('click', async (e) => {
+  const t = e.target;
+  if (t.closest('#recheck')) { init(); return; }
+  const tb = t.closest('[data-tab]'); if (tb) { tab = tb.dataset.tab; editing = null; render(); return; }
+  const qd = t.closest('[data-qdone]'); if (qd) { try { await api.setQuoteStatus(qd.dataset.qdone, 'dibalas'); QUOTES.find(q => q.id === qd.dataset.qdone).status = 'dibalas'; render(); toast('Ditanda sudah dibalas'); } catch (er) { toast(er.message, 'err'); } return; }
+  const ed = t.closest('[data-edit]'); if (ed) { editing = ed.dataset.edit; render(); $('#listingForm').scrollIntoView({ behavior: 'smooth' }); return; }
+  if (t.closest('[data-cancel-edit]')) { editing = null; render(); return; }
+  const dl = t.closest('[data-del]');
+  if (dl) { if (dl.dataset.sure) { try { await api.deleteListing(dl.dataset.del); LISTINGS = LISTINGS.filter(l => l.id !== dl.dataset.del); render(); toast('Listing dibuang'); } catch (er) { toast(er.message, 'err'); } } else { dl.dataset.sure = '1'; dl.innerHTML = 'Pasti buang?'; dl.classList.add('danger'); } return; }
+  if (t.closest('[data-verify]')) { openVerify(); return; }
+});
+document.addEventListener('change', async (e) => {
+  const t = e.target;
+  if (t.dataset.hide) { try { await api.setListingHidden(t.dataset.hide, !t.checked); LISTINGS.find(l => l.id === t.dataset.hide).hidden = !t.checked; render(); toast(t.checked ? 'Listing dipaparkan' : 'Listing disembunyikan'); } catch (er) { t.checked = !t.checked; toast(er.message, 'err'); } }
+  if (t.id === 'vfDocs') $('#vfPrev').innerHTML = [...t.files].slice(0, 3).map(f => `<img src="${URL.createObjectURL(f)}" alt="" style="height:70px;border-radius:8px">`).join('');
+});
+document.addEventListener('submit', async (e) => {
+  e.preventDefault(); const f = e.target; const btn = f.querySelector('button.pri');
+  const busyOn = () => { if (btn) { btn.disabled = true; btn.dataset.t = btn.textContent; btn.innerHTML = '<span class="spin"></span>Menghantar…'; } };
+  const busyOff = () => { if (btn) { btn.disabled = false; btn.textContent = btn.dataset.t; } };
+  try {
+    if (f.id === 'regForm') {
+      const d = { name: $('#rgName').value.trim(), role: $('#rgRole').value.trim(), phone: normPh($('#rgPhone').value), area: $('#rgArea').value.trim() || 'Seluruh Segamat', about: $('#rgAbout').value.trim() };
+      if (d.name.length < 2) return fail('#regErr', 'Sila isi nama.');
+      if (!d.role) return fail('#regErr', 'Sila isi peranan anda, contohnya Ejen Coway.');
+      if (d.phone.length < 10) return fail('#regErr', 'Sila isi nombor WhatsApp yang betul.');
+      if (PROV) { // betulkan permohonan sedia ada (yang ditolak dihantar semula)
+        const was = PROV.status; busyOn();
+        PROV = await api.updateProvider(PROV.id, d); headActions(); vRegister();
+        toast(was === 'tolak' && PROV.status === 'menunggu' ? 'Permohonan dihantar semula' : 'Permohonan dikemas kini');
+        return;
+      }
+      if (!$('#rgAgree').checked) return fail('#regErr', 'Sila sahkan maklumat dan setuju dengan Terma penggunaan.');
+      busyOn(); PROV = await api.createProvider(d); headActions(); vRegister(); toast('Permohonan dihantar. Dashboard akan dibuka selepas diluluskan admin.');
+    }
+    if (f.id === 'listingForm') {
+      const d = { id: editing || undefined, provider_id: PROV.id, title: $('#lTitle').value.trim(), cat: $('#lCat').value, price: $('#lPrice').value.trim(), unit: $('#lUnit').value.trim(), area: $('#lArea').value.trim() || 'Seluruh Segamat', descr: $('#lDesc').value.trim(), inc: $('#lInc').value.split('\n').map(x => x.trim()).filter(Boolean) };
+      if (d.title.length < 3) return fail('#lErr', 'Sila isi tajuk listing.');
+      if (!d.price) return fail('#lErr', 'Sila isi harga, atau tulis "Sebut harga".');
+      busyOn(); await api.saveListing(d); editing = null; LISTINGS = await api.myListings(PROV.id); render(); toast('Listing dihantar untuk semakan admin');
+    }
+    if (f.id === 'profileForm') {
+      busyOn(); PROV = await api.updateProvider(PROV.id, { name: $('#pvName').value.trim() || PROV.name, role: $('#pvRole').value.trim(), phone: normPh($('#pvPhone').value), area: $('#pvArea').value.trim(), about: $('#pvAbout').value.trim() });
+      render(); toast('Profil disimpan');
+    }
+    if (f.id === 'verifyForm') {
+      const files = [...$('#vfDocs').files].slice(0, 3); if (!files.length) return fail('#vErr', 'Pilih sekurang-kurangnya satu gambar.');
+      busyOn(); const blobs = await Promise.all(files.map(fl => imageToBlob(fl, 1400, 0.85)));
+      await api.requestVerify(PROV.id, blobs, $('#vfNote').value.trim()); VERIFY = await api.myVerify(PROV.id);
+      closeSheet(); render(); toast('Permohonan dihantar. Admin akan menyemak dokumen anda.');
+    }
+  } catch (er) { busyOff(); fail({ regForm: '#regErr', listingForm: '#lErr', profileForm: '#pErr', verifyForm: '#vErr' }[f.id], er.message); }
+});
+
+if (demoBanner()) init();
+</script>
+</body>
+</html>
+<script async src="/.netlify/scripts/hud?variant=public" data-nf-variant="public" data-netlify-site-id="1b819d4e-6353-48d8-8790-399d1727896c" data-app-host="app.netlify.com" data-account-tier="free"></script>
