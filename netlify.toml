@@ -1,0 +1,13 @@
+# Segamat Kita — tetapan Netlify.
+# Halaman bisnes: /l/<slug> dihidangkan oleh l.html (l.html membaca slug
+# daripada laluan, atau ?s=<slug> untuk pautan bentuk lama).
+
+[[redirects]]
+  from = "/l/*"
+  to = "/l.html"
+  status = 200
+
+[[redirects]]
+  from = "/l"
+  to = "/l.html"
+  status = 200

@@ -1,0 +1,89 @@
+/* Halaman awam peniaga (l.html) dan pratonton iframe dalam bina.html.
+   Semua kelas berawalan lp- supaya tidak bertembung dengan ui.css / portal.css.
+   Warna aksen datang dari inline style --lp-a (lihat js/landing.js). */
+body.lp-page{margin:0;background:var(--surface,#fff)}
+.lp{--lp-a:#0e5846;--lp-on:#fff;--lp-ink:var(--ink,#12211b);--lp-muted:var(--muted,#56675f);--lp-line:var(--line,#d7e1db);--lp-surface:var(--surface,#fff);--lp-soft:var(--soft,#e5eee9);
+  color:var(--lp-ink);font-family:var(--f-body,"Figtree","Segoe UI",system-ui,-apple-system,sans-serif);font-size:16px;line-height:1.55;overflow-wrap:break-word}
+.lp *{box-sizing:border-box}
+.lp-wrap{width:100%;max-width:1040px;margin:0 auto;padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px))}
+.lp h1,.lp h2,.lp h3{margin:0;font-family:var(--f-display,"Bricolage Grotesque","Segoe UI",system-ui,sans-serif);line-height:1.1;letter-spacing:-.02em}
+.lp p{margin:0}
+.lp svg.lp-i{width:19px;height:19px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.lp-kicker{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.14em;color:var(--lp-a)}
+
+/* logo / monogram */
+.lp-mark{width:76px;height:76px;border-radius:20px;display:grid;place-items:center;overflow:hidden;flex:none;background:var(--lp-soft);color:var(--lp-a);font-family:var(--f-display);font-weight:800;font-size:26px;letter-spacing:.02em}
+.lp-mark img{width:100%;height:100%;object-fit:cover;display:block}
+
+/* butang */
+.lp-btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;min-height:48px;padding:0 20px;border-radius:12px;font-weight:800;font-size:15px;text-decoration:none;border:1px solid transparent;white-space:nowrap;max-width:100%}
+.lp-btn-a{background:var(--lp-a);color:var(--lp-on)}
+.lp-btn-lg{min-height:54px;font-size:16px;padding:0 24px}
+.lp-btn-ghost{border-color:var(--lp-line);color:var(--lp-ink);background:var(--lp-surface)}
+
+/* hero */
+.lp-hero{background:var(--lp-surface);padding:32px 0 30px}
+.lp-hero-in{display:grid;gap:12px;justify-items:start;align-content:start}
+.lp-brand{font-size:clamp(29px,7.5vw,48px);font-weight:800;overflow-wrap:anywhere}
+.lp-tagline{font-size:clamp(15px,3.6vw,19px);color:var(--lp-muted);max-width:46ch}
+.lp-hero-cta{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:4px}
+.lp-area{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:700;color:var(--lp-muted);background:var(--lp-soft);padding:7px 12px;border-radius:999px;max-width:100%}
+
+/* seksyen */
+.lp-sec{padding:34px 0;display:grid;gap:14px;align-content:start}
+.lp-sec + .lp-sec{border-top:1px solid var(--lp-line)}
+.lp h2{font-size:clamp(20px,4.6vw,27px);font-weight:800}
+.lp-body{color:var(--lp-muted);white-space:pre-line;max-width:66ch;font-size:15.5px}
+
+/* grid produk */
+.lp-grid{display:grid;gap:14px;grid-template-columns:1fr}
+/* auto-fit: dua produk mengisi baris penuh; lima produk kekal 3 lajur */
+@media (min-width:560px){.lp-grid{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}}
+.lp-card{border:1px solid var(--lp-line);border-radius:14px;overflow:hidden;background:var(--lp-surface);display:grid;align-content:start;min-width:0}
+.lp-thumb{aspect-ratio:4/3;background:var(--lp-soft);display:grid;place-items:center;color:var(--lp-a);overflow:hidden}
+.lp-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.lp-thumb span{font-family:var(--f-display);font-weight:800;font-size:30px;opacity:.6}
+.lp-card-b{padding:13px 14px 15px;display:grid;gap:5px}
+.lp-card-top{display:flex;gap:8px;align-items:baseline;justify-content:space-between;flex-wrap:wrap}
+.lp-card-top h3{font-size:16.5px;font-weight:700;letter-spacing:-.01em;min-width:0;overflow-wrap:anywhere}
+.lp-price{font-family:var(--f-display);font-weight:800;font-size:14.5px;color:var(--lp-a);white-space:nowrap}
+.lp-desc{font-size:13.5px;color:var(--lp-muted);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+
+/* CTA + footer */
+.lp-cta{padding:36px 0;background:var(--lp-soft)}
+.lp-cta-in{display:grid;gap:10px;justify-items:center;text-align:center}
+.lp-small{font-size:12.5px;color:var(--lp-muted)}
+.lp-foot{border-top:1px solid var(--lp-line);background:var(--lp-surface);padding:16px 0}
+.lp-foot-in{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:13px;color:var(--lp-muted)}
+.lp-foot b{color:var(--lp-ink)}
+.lp-foot a{color:var(--lp-a);font-weight:700;text-decoration:none;padding:6px 2px}
+.lp-foot .lp-sp{flex:1}
+
+/* template: minimal — bersih, garis halus, banyak ruang */
+.tpl-minimal{border-top:5px solid var(--lp-a)}
+.tpl-minimal .lp-card:hover{border-color:var(--lp-a)}
+
+/* template: bold — blok warna aksen, taip besar, kad tebal */
+.tpl-bold .lp-hero{background:var(--lp-a);color:var(--lp-on);padding:40px 0 38px}
+.tpl-bold .lp-mark{background:rgba(255,255,255,.18);color:var(--lp-on);border-radius:14px}
+.tpl-bold .lp-brand{font-size:clamp(32px,9vw,62px);font-weight:800;letter-spacing:-.035em}
+.tpl-bold .lp-tagline{color:inherit;opacity:.92}
+.tpl-bold .lp-area{background:rgba(255,255,255,.16);color:inherit}
+.tpl-bold .lp-hero .lp-btn-a{background:var(--lp-on);color:var(--lp-a)}
+.tpl-bold h2{text-transform:uppercase;letter-spacing:-.01em}
+.tpl-bold .lp-card{border:2px solid var(--lp-a);border-radius:4px}
+.tpl-bold .lp-price{background:var(--lp-a);color:var(--lp-on);padding:2px 8px;border-radius:4px}
+.tpl-bold .lp-cta{background:var(--lp-a);color:var(--lp-on)}
+.tpl-bold .lp-cta .lp-btn-a{background:var(--lp-on);color:var(--lp-a)}
+.tpl-bold .lp-cta .lp-small{color:inherit;opacity:.85}
+.tpl-bold .lp-thumb{border-bottom:2px solid var(--lp-a)}
+
+/* keadaan: draf dan 404 */
+.lp-note{background:var(--warn-bg,#fbeed5);color:var(--warn,#94600d);font-size:13px;font-weight:700;text-align:center;padding:9px 18px}
+.lp-note a{color:inherit}
+.lp-404{min-height:64vh;display:grid;place-items:center;padding:44px 0}
+.lp-404-in{display:grid;gap:12px;justify-items:start;max-width:52ch}
+.lp-404 h1{font-size:clamp(26px,6vw,38px);font-weight:800}
+.lp-404 code{background:var(--lp-soft);padding:1px 6px;border-radius:6px;font-size:.92em;overflow-wrap:anywhere}
+.lp-404 .lp-mark{width:56px;height:56px;border-radius:16px;font-size:20px}
+.lp-404-cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px}

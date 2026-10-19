@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e5846">
+<meta name="robots" content="noindex">
+<title>Bina halaman bisnes · Segamat Kita</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="css/ui.css">
+<link rel="stylesheet" href="css/portal.css">
+<style>
+/* bina.html: chrome pembina sahaja. Halaman awam sendiri guna css/landing.css. */
+.lpb{max-width:1320px}
+.lpb-top{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;margin-bottom:16px}
+.lpb-grid{display:grid;gap:18px;grid-template-columns:1fr;align-items:start}
+@media (min-width:1080px){.lpb-grid{grid-template-columns:minmax(0,1fr) minmax(0,600px)}.lpb-grid>aside{position:sticky;top:calc(var(--hdr) + 12px)}}
+.lpb-col{display:grid;gap:14px;min-width:0}
+.lpb-sec{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:grid;gap:12px;min-width:0}
+.lpb-sec>h2{font-family:var(--f-body);font-size:12px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.lpb-sticky{position:sticky;top:calc(var(--hdr) + 8px);z-index:15}
+.lpb-actions{display:flex;gap:8px;flex-wrap:wrap}
+.lpb-actions .btn{flex:1 1 132px}
+.slugrow{display:flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:12px;background:var(--surface);padding-left:12px;min-height:46px;min-width:0}
+.slugrow>span{font-size:13px;color:var(--muted);font-weight:800;flex:none}
+.slugrow .input{border:0;background:transparent;padding-left:0;box-shadow:none;min-width:0;flex:1}
+.slugrow .input:focus{box-shadow:none}
+.logo-pick{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.logo-box{width:76px;height:76px;border-radius:16px;border:1.5px dashed var(--line);display:grid;place-items:center;overflow:hidden;background:var(--soft);color:var(--muted);flex:none;cursor:pointer}
+.logo-box img{width:100%;height:100%;object-fit:cover}
+.logo-box.busy{opacity:.45;pointer-events:none}
+.sw{width:34px;height:34px;border-radius:50%;border:2px solid var(--line);background:var(--c);cursor:pointer;padding:0;flex:none}
+.sw.on{border-color:var(--ink)}
+.tpl-pick{display:grid;gap:10px;grid-template-columns:1fr 1fr}
+.tplcard{position:relative;display:grid;gap:5px;border:1px solid var(--line);border-radius:12px;padding:10px;cursor:pointer;background:var(--surface);min-width:0}
+.tplcard:has(input:checked){border-color:var(--brand);box-shadow:inset 0 0 0 1px var(--brand)}
+.tplcard input{position:absolute;opacity:0;pointer-events:none}
+.tplprev{height:56px;border-radius:8px;overflow:hidden;display:grid;gap:4px;padding:8px;background:var(--soft);align-content:start}
+.tplprev i{display:block;border-radius:3px;height:6px;background:var(--muted);opacity:.4}
+.tpl-bold-prev{background:var(--brand)}
+.tpl-bold-prev i{background:#fff;opacity:.65}
+.prow{display:grid;gap:10px;grid-template-columns:58px minmax(0,1fr);align-items:start;border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--bg)}
+.pthumb{width:58px;height:58px;border-radius:10px;overflow:hidden;border:1px dashed var(--line);background:var(--surface);display:grid;place-items:center;color:var(--muted);cursor:pointer;flex:none}
+.pthumb img{width:100%;height:100%;object-fit:cover}
+.pthumb.busy{opacity:.45;pointer-events:none}
+.pfields{display:grid;gap:7px;min-width:0}
+.pfields .input{min-width:0}
+.pfields .row.nowrap>.input{flex:1 1 60px;min-width:0}
+.ptools{display:flex;gap:5px;flex:none}
+.ptools .btn{min-height:36px;padding:4px 9px;min-width:36px}
+.pv-head{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.pv-head .seg{max-width:250px;flex:1 1 200px}
+.pv-frame{position:relative;overflow:auto;max-height:min(72vh,820px);border:1px solid var(--line);border-radius:18px;background:var(--surface);box-shadow:var(--shadow-sm);width:100%}
+.pv-frame[data-dev="mobile"]{max-width:390px;margin:0 auto;border-radius:26px}
+.pv-scale{position:relative;width:100%;overflow:hidden}
+.pv-scale iframe{position:absolute;top:0;left:0;border:0;transform-origin:top left;background:var(--surface)}
+.pv-note{font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class='logo' href='index.html' id='logo'></a>
+  <span class="spacer"></span>
+  <span id="headActions" class="row nowrap" style="gap:8px"></span>
+</div></header>
+<main><div class="wrap lpb" id="app"></div></main>
+<div id="layer"></div>
+
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js" integrity="sha384-2zrRDgDHSYB/GN3nFW3fsZXoxEhKIr3N2h63Tc6DEOB9JJdFIu8xMJT2Cph/gBil" crossorigin="anonymous"></script>
+<script src="js/api.js"></script>
+<script src="js/common.js"></script>
+<script src="js/portal.js"></script>
+<script src="js/landing.js"></script>
+<script>
+const app = $('#app');
+$('#logo').innerHTML = LOGO + '<span>Segamat Kita <span class="muted small" style="font-family:var(--f-body);font-weight:600">Halaman bisnes</span></span>';
+
+const blank = () => ({ id: null, slug: '', brand_name: '', tagline: '', about: '', logo_url: '', whatsapp: '', area: '', accent: '#0e5846', template: 'minimal', products: [], status: 'draft' });
+let PAGE = blank();
+let slugTouched = false, busy = false, pvDev = 'mobile', pvTimer = 0;
+const SWATCH = ['#0e5846', '#b45309', '#a21c1c', '#1d4ed8', '#6d28d9', '#0f766e'];
+// Pautan awam: Netlify rewrite /l/* → l.html. Semasa ujian tempatan (localhost /
+// fail) tiada rewrite, jadi guna bentuk l.html?s= yang sentiasa berfungsi.
+const LOCAL = /^(localhost|127\.0\.0\.1|\[::1\]|)$/.test(location.hostname) || location.protocol === 'file:';
+const publicHref = (slug) => slug ? (LOCAL ? 'l.html?s=' + encodeURIComponent(slug) : 'l/' + encodeURIComponent(slug)) : '';
+
+function headActions() {
+  $('#headActions').innerHTML = `<a class="btn sm hide-sm" href="index.html">${ic('home')}Utama</a><button id="accountBtn"></button>`;
+  renderAccountBtn();
+}
+const fail = (m) => { const b = $('#formErr'); if (b) b.innerHTML = `<div class="err">${ic('alert')}<span>${esc(m)}</span></div>`; };
+
+/* ================= Log masuk ================= */
+function vAuth() {
+  $('#headActions').innerHTML = '';
+  app.innerHTML = `<div class="auth" style="max-width:470px;margin:4vh auto 0;display:grid;gap:16px">
+    <div class="stack" style="text-align:center;justify-items:center;gap:6px">
+      <div class="thumb lg" style="--h:150">${ic('store', '')}</div>
+      <h1 style="font-size:30px">Bina halaman bisnes</h1>
+      <p class="muted">Satu halaman awam untuk bisnes anda: logo, tentang, senarai produk dan butang WhatsApp. Percuma, dan pautannya boleh dikongsi di WhatsApp atau Instagram.</p></div>
+    <div class="card">${googleBtn('Teruskan dengan Google')}<p class="small muted" style="text-align:center">Hanya akaun Google dengan email yang disahkan boleh log masuk.</p></div>
+    ${api.mode === 'demo' ? '<div class="note-box small"><b>Mod demo:</b> pilih mana-mana akaun dalam senarai. Data disimpan dalam pelayar ini sahaja.</div>' : ''}
+    <a class="btn ghost sm" href="index.html" style="justify-self:center">${ic('back')}Ke Segamat Kita</a></div>`;
+}
+
+/* ================= Borang + pratonton ================= */
+function vBuild() {
+  const pub = PAGE.status === 'published';
+  const areaOpts = ['<option value="">— Pilih kawasan —</option>']
+    .concat(C.AREAS.map(a => `<option value="${esc(a)}"${PAGE.area === a ? ' selected' : ''}>${esc(a)}</option>`)).join('');
+  app.innerHTML = `
+  <div class="lpb-top">
+    <div class="stack" style="gap:4px">
+      <p class="eyebrow">Halaman bisnes</p>
+      <h1 style="font-size:clamp(22px,4.6vw,30px)">Bina halaman bisnes anda</h1>
+      <p class="small muted">Isi butiran, tengok pratonton di sebelah, kemudian terbitkan. Satu pautan untuk semua pelanggan.</p>
+    </div>
+  </div>
+  <div class="lpb-grid">
+    <div class="lpb-col">
+      <div class="lpb-sec lpb-sticky">
+        <div class="row between" style="gap:8px">
+          <div class="row nowrap" style="gap:8px"><span id="statusPill" class="pill warn">Draf</span><span class="small muted" id="savedAt"></span></div>
+          <span class="small" id="liveUrl"></span>
+        </div>
+        <div class="lpb-actions">
+          <button type="button" class="btn" id="saveDraft">${ic('check')}Simpan draf</button>
+          <button type="button" class="btn pri" id="publishBtn">${ic('arrow')}Terbitkan</button>
+          <button type="button" class="btn" id="viewBtn" disabled>${ic('ext')}Lihat</button>
+          <button type="button" class="btn" id="copyBtn" disabled>${ic('ext')}Salin pautan</button>
+        </div>
+        <div id="formErr"></div>
+      </div>
+
+      <div class="lpb-sec">
+        <h2>Maklumat asas</h2>
+        <div class="field"><label for="bBrand">Nama bisnes</label>
+          <input class="input" id="bBrand" data-p="brand_name" maxlength="60" autocomplete="organization" placeholder="Contoh: Kedai Kopi Segamat" value="${esc(PAGE.brand_name)}"></div>
+        <div class="field"><label for="bSlug">Pautan halaman</label>
+          <div class="slugrow"><span>l/</span><input class="input" id="bSlug" data-p="slug" maxlength="40" placeholder="nama-bisnes" value="${esc(PAGE.slug)}"${pub ? ' readonly' : ''}></div>
+          <p class="hint">${pub ? 'Pautan dikunci kerana halaman sudah diterbitkan.' : 'Dibina automatik daripada nama bisnes. Huruf kecil, nombor dan sengkang sahaja.'}</p></div>
+        <div class="field"><label for="bTagline">Tagline</label>
+          <input class="input" id="bTagline" data-p="tagline" maxlength="120" placeholder="Contoh: Kopi kampung, dibancuh segar setiap pagi" value="${esc(PAGE.tagline)}"></div>
+        <div class="field"><label for="bAbout">Tentang</label>
+          <textarea class="input" id="bAbout" data-p="about" maxlength="900" rows="5" placeholder="Ceritakan bisnes anda: apa yang dijual, bila dibuka, apa yang istimewa.">${esc(PAGE.about)}</textarea></div>
+      </div>
+
+      <div class="lpb-sec">
+        <h2>Identiti &amp; hubungan</h2>
+        <div class="logo-pick">
+          <label class="logo-box" id="logoBox" title="Muat naik logo">${PAGE.logo_url ? `<img src="${esc(PAGE.logo_url)}" alt="Logo bisnes">` : ic('store', '')}<input type="file" id="bLogo" accept="image/*" hidden></label>
+          <div class="stack" style="gap:4px;min-width:0">
+            <b class="small">Logo bisnes</b>
+            <span class="small muted">JPEG atau PNG. Gambar dikecilkan automatik sebelum dimuat naik.</span>
+            <button type="button" class="btn sm ghost" id="logoClear" style="justify-self:start;${PAGE.logo_url ? '' : 'display:none'}">Buang logo</button>
+          </div>
+        </div>
+        <div class="frow two">
+          <div class="field"><label for="bWa">No. WhatsApp</label>
+            <input class="input num" id="bWa" data-p="whatsapp" inputmode="tel" maxlength="20" placeholder="012-700 0001" value="${esc(PAGE.whatsapp)}"></div>
+          <div class="field"><label for="bArea">Kawasan</label>
+            <select class="input" id="bArea" data-p="area">${areaOpts}</select></div>
+        </div>
+        <div class="field"><span class="flabel">Warna aksen</span>
+          <div class="row" style="gap:8px">
+            <input type="color" class="input" id="bAccent" data-p="accent" value="${esc(PAGE.accent)}" style="width:64px;min-height:46px;padding:4px;flex:none">
+            ${SWATCH.map(c => `<button type="button" class="sw${String(PAGE.accent).toLowerCase() === c ? ' on' : ''}" data-accent="${c}" style="--c:${c}" aria-label="Warna ${c}"></button>`).join('')}
+          </div></div>
+        <div class="field"><span class="flabel">Template</span>
+          <div class="tpl-pick">
+            <label class="tplcard"><input type="radio" name="tpl" value="minimal"${PAGE.template !== 'bold' ? ' checked' : ''}>
+              <span class="tplprev" aria-hidden="true"><i style="width:72%"></i><i style="width:46%"></i><i style="width:88%"></i></span>
+              <b class="small">Minimal</b><span class="hint">Bersih dan lapang</span></label>
+            <label class="tplcard"><input type="radio" name="tpl" value="bold"${PAGE.template === 'bold' ? ' checked' : ''}>
+              <span class="tplprev tpl-bold-prev" aria-hidden="true"><i style="width:82%"></i><i style="width:54%"></i><i style="width:90%"></i></span>
+              <b class="small">Bold</b><span class="hint">Warna kuat, taip besar</span></label>
+          </div></div>
+      </div>
+
+      <div class="lpb-sec">
+        <div class="row between"><h2>Produk</h2><span class="small muted" id="prodCount"></span></div>
+        <div class="list" id="prodList"></div>
+        <button type="button" class="btn" id="addProd">${ic('plus')}Tambah produk</button>
+      </div>
+    </div>
+
+    <aside class="lpb-col">
+      <div class="pv-head">
+        <div class="seg" role="tablist" aria-label="Saiz pratonton">
+          <button type="button" role="tab" aria-selected="true" data-dev="mobile" class="on">Telefon</button>
+          <button type="button" role="tab" aria-selected="false" data-dev="desktop">Komputer</button>
+        </div>
+        <span class="small muted" id="pvMode">390px</span>
+      </div>
+      <div class="pv-frame" id="pvFrame" data-dev="mobile"><div class="pv-scale" id="pvScale"><iframe id="pvIframe" title="Pratonton halaman bisnes"></iframe></div></div>
+      <p class="pv-note">Pratonton guna halaman awam yang sama (l.html) — apa yang anda lihat di sini ialah apa yang pelanggan lihat.</p>
+    </aside>
+  </div>`;
+  renderProducts();
+}
+
+function renderProducts() {
+  const box = $('#prodList'); if (!box) return;
+  const n = PAGE.products.length;
+  const c = $('#prodCount'); if (c) c.textContent = n ? n + ' produk' : '';
+  if (!n) { box.innerHTML = emptyState('market', 'Belum ada produk. Tekan <b>Tambah produk</b> untuk senaraikan menu atau perkhidmatan anda.'); return; }
+  box.innerHTML = PAGE.products.map((it, i) => `<div class="prow" data-pi="${i}">
+    <label class="pthumb" title="Gambar produk">${it.image_url ? `<img src="${esc(it.image_url)}" alt="">` : ic('plus')}<input type="file" accept="image/*" data-f="file" hidden></label>
+    <div class="pfields">
+      <input class="input sm" data-f="name" maxlength="70" placeholder="Nama produk" value="${esc(it.name || '')}" aria-label="Nama produk ${i + 1}">
+      <div class="row nowrap" style="gap:6px">
+        <input class="input sm" data-f="price" maxlength="20" placeholder="Harga (RM 5.00)" value="${esc(it.price || '')}" aria-label="Harga produk ${i + 1}">
+        <div class="ptools">
+          <button type="button" class="btn sm ghost" data-move="up"${i === 0 ? ' disabled' : ''} aria-label="Naikkan produk ${i + 1}">↑</button>
+          <button type="button" class="btn sm ghost" data-move="down"${i === n - 1 ? ' disabled' : ''} aria-label="Turunkan produk ${i + 1}">↓</button>
+          <button type="button" class="btn sm ghost danger" data-rm aria-label="Buang produk ${i + 1}">${ic('trash')}</button>
+        </div>
+      </div>
+      <textarea class="input sm" data-f="desc" rows="2" maxlength="200" placeholder="Deskripsi ringkas (pilihan)" aria-label="Deskripsi produk ${i + 1}">${esc(it.desc || '')}</textarea>
+    </div></div>`).join('');
+}
+
+function updateChrome() {
+  const pill = $('#statusPill'); if (!pill) return;
+  const pub = PAGE.status === 'published';
+  pill.className = 'pill ' + (pub ? 'ok' : 'warn');
+  pill.textContent = pub ? 'Diterbitkan' : 'Draf';
+  const has = !!(PAGE.id && PAGE.slug);
+  const v = $('#viewBtn'), c = $('#copyBtn');
+  if (v) v.disabled = !has; if (c) c.disabled = !has;
+  const live = $('#liveUrl');
+  if (live) live.innerHTML = has ? `<a href="${esc(publicHref(PAGE.slug))}" target="_blank" rel="noopener">${esc((LOCAL ? 'l.html?s=' : '/l/') + PAGE.slug)}</a>` : '';
+  const sa = $('#savedAt'); if (sa) sa.textContent = PAGE.updated_at ? 'Disimpan ' + ago(PAGE.updated_at) : '';
+  const s = $('#bSlug'); if (s && pub) s.setAttribute('readonly', 'readonly');
+  document.title = (PAGE.brand_name ? PAGE.brand_name + ' · ' : '') + 'Bina halaman · Segamat Kita';
+}
+
+/* ================= Pratonton (iframe) ================= */
+function schedulePreview() { clearTimeout(pvTimer); pvTimer = setTimeout(renderPreview, 200); }
+function renderPreview() {
+  const f = $('#pvIframe'); if (!f) return;
+  f.srcdoc = lpPreviewDoc(PAGE);
+}
+function fitPreview() {
+  const f = $('#pvIframe'), frame = $('#pvFrame'), sc = $('#pvScale');
+  if (!f || !frame || !sc || !f.contentDocument) return;
+  const w = pvDev === 'mobile' ? 390 : 1024;
+  const d = f.contentDocument;
+  const h = Math.max(560, (d.documentElement && d.documentElement.scrollHeight) || 0, (d.body && d.body.scrollHeight) || 0);
+  const avail = Math.max(140, frame.clientWidth - 2);
+  const s = Math.min(1, avail / w);
+  f.style.width = w + 'px'; f.style.height = h + 'px'; f.style.transform = 'scale(' + s + ')';
+  sc.style.height = (h * s) + 'px';
+  const m = $('#pvMode'); if (m) m.textContent = w + 'px';
+}
+document.addEventListener('load', (e) => {
+  if (!e.target || e.target.id !== 'pvIframe') return;
+  fitPreview();
+  setTimeout(fitPreview, 150);
+  const d = e.target.contentDocument;
+  if (d) d.querySelectorAll('img').forEach(im => im.addEventListener('load', fitPreview));
+}, true);
+window.addEventListener('resize', fitPreview);
+
+/* ================= Simpan / terbit ================= */
+async function save(publish) {
+  if (busy) return;
+  const box = $('#formErr'); if (box) box.innerHTML = '';
+  const name = String(PAGE.brand_name || '').trim();
+  const phone = normPh(PAGE.whatsapp);
+  if (name.length < 2) return fail('Sila isi nama bisnes.');
+  if (phone.length < 10) return fail('Sila isi nombor WhatsApp yang betul, contoh 012-700 0001.');
+  PAGE.brand_name = name;
+  PAGE.slug = slugify(PAGE.slug || name);
+  if (PAGE.slug.length < 3) return fail('Pautan halaman terlalu pendek. Tambah huruf pada nama bisnes atau pautan.');
+
+  busy = true;
+  const btns = $$('.lpb-actions .btn'); btns.forEach(b => (b.disabled = true));
+  const hit = publish ? $('#publishBtn') : $('#saveDraft');
+  const label = hit ? hit.innerHTML : '';
+  if (hit) hit.innerHTML = '<span class="spin"></span>Menyimpan…';
+  try {
+    const products = PAGE.products.map(p => ({
+      name: String(p.name || '').trim().slice(0, 70),
+      price: String(p.price || '').trim().slice(0, 20),
+      desc: String(p.desc || '').trim().slice(0, 200),
+      image_url: p.image_url || ''
+    })).filter(p => p.name);
+    const payload = {
+      id: PAGE.id || undefined,
+      slug: PAGE.slug,
+      brand_name: name,
+      tagline: String(PAGE.tagline || '').trim().slice(0, 140),
+      about: String(PAGE.about || '').trim().slice(0, 1200),
+      logo_url: PAGE.logo_url || null,
+      whatsapp: phone,
+      area: PAGE.area || '',
+      accent: PAGE.accent,
+      template: PAGE.template === 'bold' ? 'bold' : 'minimal',
+      products
+    };
+    let row = await api.landingSave(payload);
+    if (publish) row = await api.landingPublish(row.id);
+    PAGE = { ...PAGE, ...row, products: Array.isArray(row.products) ? row.products : [] };
+    PAGE.whatsapp = phone;
+    const s = $('#bSlug'); if (s) s.value = PAGE.slug;
+    const wa = $('#bWa'); if (wa) wa.value = phone;
+    updateChrome();
+    renderPreview();
+    toast(publish ? 'Halaman diterbitkan. Pautan sedia dikongsi.' : 'Draf disimpan.');
+  } catch (er) {
+    fail(er.message || 'Gagal menyimpan. Cuba lagi.');
+  } finally {
+    busy = false;
+    btns.forEach(b => (b.disabled = false));
+    if (hit) hit.innerHTML = label;
+    updateChrome();
+  }
+}
+
+async function copyLink() {
+  if (!PAGE.slug) return;
+  const url = new URL(publicHref(PAGE.slug), location.href).href;
+  try { await navigator.clipboard.writeText(url); toast('Pautan disalin'); }
+  catch (e) {
+    sheet(`${sheetHead('Pautan halaman')}<p class="small muted">Salin pautan di bawah untuk dikongsi.</p>
+      <div class="slugrow" style="padding-right:10px"><input class="input" id="linkOut" readonly value="${esc(url)}"></div>
+      <button class="btn pri block" data-close>Tutup</button>`);
+    const el = $('#linkOut'); if (el) { el.focus(); el.select(); }
+  }
+}
+
+/* ================= Muat naik gambar ================= */
+async function onPick(input, apply) {
+  const file = input.files && input.files[0]; if (!file) return;
+  const box = input.closest('.logo-box') || input.closest('.pthumb');
+  if (box) box.classList.add('busy');
+  try {
+    const blob = await imageToBlob(file, 800, 0.82);
+    apply(await api.uploadImage(blob));
+    schedulePreview();
+    toast('Gambar dimuat naik');
+  } catch (er) { toast(er.message || 'Gambar gagal dimuat naik', 'err'); }
+  finally { if (box) box.classList.remove('busy'); input.value = ''; }
+}
+
+/* ================= Event ================= */
+document.addEventListener('input', (e) => {
+  const t = e.target;
+  const row = t.closest('[data-pi]');
+  if (row && t.dataset.f && t.dataset.f !== 'file') {
+    const it = PAGE.products[+row.dataset.pi]; if (!it) return;
+    if (['name', 'price', 'desc'].includes(t.dataset.f)) { it[t.dataset.f] = t.value; schedulePreview(); }
+    return;
+  }
+  if (!t.dataset.p) return;
+  if (t.dataset.p === 'slug') { slugTouched = true; PAGE.slug = t.value; schedulePreview(); return; }
+  PAGE[t.dataset.p] = t.value;
+  if (t.dataset.p === 'brand_name' && !slugTouched) {
+    PAGE.slug = slugify(t.value);
+    const s = $('#bSlug'); if (s) s.value = PAGE.slug;
+  }
+  schedulePreview();
+});
+// Slug dikemas kini hanya bila medan ditinggalkan, supaya menaip tidak "meloncat"
+document.addEventListener('blur', (e) => {
+  if (e.target && e.target.id === 'bSlug') {
+    const v = slugify(e.target.value) || slugify(PAGE.brand_name);
+    e.target.value = v; PAGE.slug = v; schedulePreview();
+  }
+}, true);
+document.addEventListener('change', (e) => {
+  const t = e.target;
+  if (t.name === 'tpl') { PAGE.template = t.value === 'bold' ? 'bold' : 'minimal'; schedulePreview(); return; }
+  if (t.id === 'bLogo') {
+    onPick(t, (url) => {
+      PAGE.logo_url = url;
+      const box = $('#logoBox'); if (box) box.innerHTML = `<img src="${esc(url)}" alt="Logo bisnes"><input type="file" id="bLogo" accept="image/*" hidden>`;
+      const clr = $('#logoClear'); if (clr) clr.style.display = '';
+    });
+    return;
+  }
+  if (t.dataset.f === 'file') {
+    const row = t.closest('[data-pi]'); if (!row) return;
+    const i = +row.dataset.pi;
+    onPick(t, (url) => {
+      const it = PAGE.products[i]; if (!it) return;
+      it.image_url = url;
+      const th = row.querySelector('.pthumb');
+      if (th) th.innerHTML = `<img src="${esc(url)}" alt=""><input type="file" accept="image/*" data-f="file" hidden>`;
+    });
+  }
+});
+document.addEventListener('click', (e) => {
+  const t = e.target;
+  const dev = t.closest('[data-dev]');
+  if (dev) {
+    pvDev = dev.dataset.dev === 'desktop' ? 'desktop' : 'mobile';
+    $$('[data-dev]').forEach(x => { x.classList.toggle('on', x === dev); x.setAttribute('aria-selected', x === dev ? 'true' : 'false'); });
+    const f = $('#pvFrame'); if (f) f.dataset.dev = pvDev;
+    renderPreview();
+    return;
+  }
+  const sw = t.closest('[data-accent]');
+  if (sw) {
+    PAGE.accent = sw.dataset.accent;
+    const inp = $('#bAccent'); if (inp) inp.value = PAGE.accent;
+    $$('[data-accent]').forEach(x => x.classList.toggle('on', x === sw));
+    schedulePreview();
+    return;
+  }
+  if (t.closest('#addProd')) {
+    PAGE.products.push({ name: '', price: '', desc: '', image_url: '' });
+    renderProducts(); schedulePreview();
+    const last = $('#prodList .prow:last-child [data-f="name"]'); if (last) last.focus();
+    return;
+  }
+  const rm = t.closest('[data-rm]');
+  if (rm) { PAGE.products.splice(+rm.closest('[data-pi]').dataset.pi, 1); renderProducts(); schedulePreview(); return; }
+  const mv = t.closest('[data-move]');
+  if (mv) {
+    const i = +mv.closest('[data-pi]').dataset.pi, j = mv.dataset.move === 'up' ? i - 1 : i + 1;
+    if (j < 0 || j >= PAGE.products.length) return;
+    const a = PAGE.products; [a[i], a[j]] = [a[j], a[i]];
+    renderProducts(); schedulePreview();
+    const f = $(`[data-pi="${j}"] [data-f="name"]`); if (f) f.focus();
+    return;
+  }
+  if (t.closest('#logoClear')) {
+    PAGE.logo_url = '';
+    const box = $('#logoBox'); if (box) box.innerHTML = ic('store', '') + '<input type="file" id="bLogo" accept="image/*" hidden>';
+    const clr = $('#logoClear'); if (clr) clr.style.display = 'none';
+    schedulePreview();
+    return;
+  }
+  if (t.closest('#saveDraft')) { save(false); return; }
+  if (t.closest('#publishBtn')) { save(true); return; }
+  if (t.closest('#viewBtn')) { window.open(publicHref(PAGE.slug), '_blank', 'noopener'); return; }
+  if (t.closest('#copyBtn')) { copyLink(); return; }
+});
+document.addEventListener('auth-changed', init);
+
+/* ================= Mula ================= */
+async function init() {
+  app.innerHTML = loading();
+  try {
+    await initAuth();
+    if (!Auth.user) return vAuth();
+    headActions();
+    const row = await api.landingMine();
+    if (row) {
+      PAGE = { ...blank(), ...row, products: Array.isArray(row.products) ? row.products : [] };
+      slugTouched = true;
+    }
+    vBuild();
+    renderPreview();
+    updateChrome();
+  } catch (e) {
+    app.innerHTML = emptyState('alert', esc(e.message) + '<br><button class="btn sm" style="margin-top:8px" onclick="location.reload()">Cuba lagi</button>');
+  }
+}
+if (demoBanner()) init();
+</script>
+</body>
+</html>

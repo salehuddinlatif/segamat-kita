@@ -12,10 +12,21 @@
   // Medan semakan yang tidak dihantar oleh pemilik (diurus oleh server)
   const REVIEW_COLS = ['status', 'reason', 'pending', 'pending_at', 'pending_reason'];
   const strip = (o, extra = []) => Object.fromEntries(Object.entries(o).filter(([k]) => !REVIEW_COLS.includes(k) && !extra.includes(k)));
+  // Halaman landing: lajur awam sahaja (padan dengan GRANT kolum untuk anon dalam migration)
+  const LANDING_PUBLIC = 'id,slug,brand_name,tagline,about,logo_url,whatsapp,area,accent,template,products,status,created_at,updated_at';
+  const LANDING_COLS = ['slug', 'brand_name', 'tagline', 'about', 'logo_url', 'whatsapp', 'area', 'accent', 'template', 'products', 'status'];
+  function landingRow(d) {
+    const row = {};
+    for (const k of LANDING_COLS) if (k in d) row[k] = d[k] ?? null;
+    if ('products' in row) row.products = Array.isArray(row.products) ? row.products.slice(0, 60) : [];
+    if (typeof row.slug === 'string') row.slug = row.slug.trim().toLowerCase();
+    return row;
+  }
 
   function friendly(err) {
     const m = (err && (err.message || err.error_description)) || String(err);
     if (/rate limit/i.test(m)) return 'Terlalu banyak cubaan. Tunggu sebentar dan cuba lagi.';
+    if (/landing_pages_slug_key|duplicate key.*landing/i.test(m)) return 'Pautan halaman ini sudah diambil. Cuba pautan lain.';
     if (/shops_slug_key|duplicate key.*slug/i.test(m)) return 'Pautan kedai ini sudah diambil. Cuba nama lain.';
     if (/shops_owner_key/i.test(m)) return 'Akaun ini sudah ada kedai.';
     if (/providers_owner_key/i.test(m)) return 'Akaun ini sudah didaftarkan sebagai penyedia servis.';
@@ -164,6 +175,27 @@
         return un(await sb.from('verify_requests').insert({ provider_id: pid, docs, note }).select().single());
       },
       async myVerify(pid) { return un(await sb.from('verify_requests').select('id,status,reason,created_at').eq('provider_id', pid).order('created_at', { ascending: false }).limit(1).maybeSingle()); },
+
+      // ---------- Halaman landing (bina.html → l.html) ----------
+      // RLS: awam hanya nampak status='published'; pemilik nampak baris sendiri (termasuk draf).
+      async landingBySlug(slug) {
+        const s = String(slug || '').trim().toLowerCase(); if (!s) return null;
+        return un(await sb.from('landing_pages').select(LANDING_PUBLIC).eq('slug', s).maybeSingle());
+      },
+      async landingMine() {
+        const u = await this.getUser(); if (!u) return null;
+        return un(await sb.from('landing_pages').select('*').eq('owner', u.id).order('created_at', { ascending: false }).limit(1).maybeSingle());
+      },
+      async landingSave(d) {
+        const u = await this.getUser();
+        const row = landingRow(d);
+        if (d.id) return un(await sb.from('landing_pages').update({ ...row, updated_at: new Date().toISOString() }).eq('id', d.id).select().single());
+        return un(await sb.from('landing_pages').insert({ ...row, owner: u.id }).select().single());
+      },
+      async landingPublish(id) {
+        return un(await sb.from('landing_pages').update({ status: 'published', updated_at: new Date().toISOString() }).eq('id', id).select().single());
+      },
+      async landingDelete(id) { un(await sb.from('landing_pages').delete().eq('id', id)); },
 
       // ---------- Admin ----------
       async adminCounts() {
@@ -319,7 +351,7 @@
           ls('lim', 'Penapis Air & Tilam Cuckoo', 'Penapis Air & Peralatan', 'RM 55', '/bulan', 'Contoh listing. Pakej penapis air dan tilam.', ['Pasang percuma']),
           ls('nurul', 'Insurans & Takaful Kereta', 'Insurans & Takaful', 'Sebut harga', '', 'Contoh listing. Banding beberapa syarikat, roadtax diuruskan sekali.', ['Roadtax diuruskan']),
           ls('azman', 'Wiring rumah & pemasangan lampu', 'Elektrik & Wiring', 'Dari RM 80', '/kerja', 'Contoh listing. Tambah plug, tukar DB, masalah trip.', ['Pemeriksaan percuma'])],
-        quotes: [], verify: [],
+        quotes: [], verify: [], landing: [],
         directory: [
           { id: uid(), name: 'Contoh: Bengkel Kereta Maju Jaya', cat: 'Kenderaan', area: 'Bandar Segamat', phone: '60127100001', hours: '9:00 pagi – 6:00 petang', descr: 'Servis enjin, brek, tukar minyak hitam.', address: '', map_url: null },
           { id: uid(), name: 'Contoh: Farmasi Segar', cat: 'Kesihatan', area: 'Bandar Segamat', phone: '60127100004', hours: '9:00 pagi – 9:00 malam', descr: 'Ubat, vitamin, semakan tekanan darah.', address: '', map_url: null },
@@ -327,7 +359,7 @@
       };
     }
     // Menu dari data demo lama tiada status: anggap sudah lulus
-    const norm = (d) => { d.menu.forEach(m => { if (!m.status) m.status = 'lulus'; }); return d; };
+    const norm = (d) => { d.menu.forEach(m => { if (!m.status) m.status = 'lulus'; }); if (!Array.isArray(d.landing)) d.landing = []; return d; };
     let db = norm(read(KEY, null) || seed()); write(KEY, db);
     const reload = () => { db = norm(read(KEY, db)); };
     const save = () => write(KEY, db);
@@ -523,6 +555,46 @@
         const v = { id: uid(), provider_id: pid, docs, note, status: 'menunggu', reason: null, created_at: now() }; db.verify.unshift(v); save(); return v;
       },
       async myVerify(pid) { reload(); return db.verify.find(v => v.provider_id === pid) || null; },
+
+      // ---------- Halaman landing (mod demo: localStorage) ----------
+      async landingMine() {
+        reload(); const u = me(); if (!u) return null;
+        return db.landing.filter(r => r.owner === u.id).sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')))[0] || null;
+      },
+      async landingBySlug(slug) {
+        await wait(); reload(); const u = me();
+        const s = String(slug || '').trim().toLowerCase();
+        const r = db.landing.find(x => x.slug === s);
+        // Sama dengan RLS: terbit untuk semua, draf hanya untuk pemilik
+        return r && (r.status === 'published' || (u && r.owner === u.id)) ? { ...r } : null;
+      },
+      async landingSave(d) {
+        await wait(); reload(); const u = needUser();
+        const row = landingRow(d);
+        if (!row.brand_name || !row.slug) err('Sila isi nama bisnes dan pautan halaman.');
+        if (db.landing.some(r => r.slug === row.slug && r.id !== d.id)) err('Pautan halaman ini sudah diambil. Cuba pautan lain.');
+        if (d.id) {
+          const r = db.landing.find(x => x.id === d.id);
+          if (!r) err('Halaman tidak dijumpai.');
+          if (r.owner !== u.id) err('Anda tiada kebenaran untuk halaman ini.');
+          Object.assign(r, row, { updated_at: now() }); save(); return { ...r };
+        }
+        const r = { id: uid(), owner: u.id, status: 'draft', ...row, created_at: now(), updated_at: now() };
+        db.landing.push(r); save(); return { ...r };
+      },
+      async landingPublish(id) {
+        await wait(); reload(); const u = needUser();
+        const r = db.landing.find(x => x.id === id);
+        if (!r) err('Halaman tidak dijumpai.');
+        if (r.owner !== u.id) err('Anda tiada kebenaran untuk halaman ini.');
+        r.status = 'published'; r.updated_at = now(); save(); return { ...r };
+      },
+      async landingDelete(id) {
+        await wait(); reload(); const u = needUser();
+        const r = db.landing.find(x => x.id === id); if (!r) return;
+        if (r.owner !== u.id) err('Anda tiada kebenaran untuk halaman ini.');
+        db.landing = db.landing.filter(x => x.id !== id); save();
+      },
 
       // ---------- Admin ----------
       async adminCounts() {

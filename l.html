@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e5846">
+<title>Segamat Kita</title>
+<meta name="description" content="Halaman bisnes tempatan di Segamat Kita.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="/css/ui.css">
+<link rel="stylesheet" href="/css/landing.css">
+</head>
+<body class="lp-page">
+<div id="page"><div class="lp"><div class="lp-wrap" style="padding-top:64px"><div class="loading"><span class="spin"></span>Memuatkan…</div></div></div></div>
+<div id="layer"></div>
+
+<script src="/config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.49.4/dist/umd/supabase.min.js" integrity="sha384-2zrRDgDHSYB/GN3nFW3fsZXoxEhKIr3N2h63Tc6DEOB9JJdFIu8xMJT2Cph/gBil" crossorigin="anonymous"></script>
+<script src="/js/api.js"></script>
+<script src="/js/landing.js"></script>
+<script>
+const pageEl = document.getElementById('page');
+const qs = new URLSearchParams(location.search);
+// Slug dari ?s= (pautan biasa) atau dari laluan /l/<slug> (Netlify rewrite /l/* → l.html)
+function slugFromPath() {
+  const m = location.pathname.match(/\/l\/([^/]+)\/?$/i);
+  if (!m) return '';
+  try { return decodeURIComponent(m[1]); } catch (e) { return m[1]; }
+}
+const SLUG = String(qs.get('s') || slugFromPath() || '').trim().toLowerCase();
+
+function setMeta(title, description, noindex) {
+  document.title = title;
+  let d = document.querySelector('meta[name="description"]');
+  if (!d) { d = document.createElement('meta'); d.setAttribute('name', 'description'); document.head.appendChild(d); }
+  d.setAttribute('content', description);
+  let r = document.querySelector('meta[name="robots"]');
+  if (noindex) {
+    if (!r) { r = document.createElement('meta'); r.setAttribute('name', 'robots'); document.head.appendChild(r); }
+    r.setAttribute('content', 'noindex');
+  } else if (r) r.remove();
+}
+
+function notFound() {
+  setMeta('Halaman tidak dijumpai · Segamat Kita', 'Halaman ini tiada atau belum diterbitkan oleh pemiliknya.', true);
+  pageEl.innerHTML = lp404(SLUG);
+}
+
+function failed(msg) {
+  setMeta('Halaman tidak dapat dimuatkan · Segamat Kita', 'Cuba muat semula halaman ini.', true);
+  pageEl.innerHTML = `<div class="lp"><div class="lp-wrap lp-404"><div class="lp-404-in">
+    <p class="lp-kicker">Ralat</p><h1>Halaman tidak dapat dimuatkan</h1>
+    <p class="lp-body">${String(msg || 'Tiada sambungan internet.').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))}</p>
+    <button class="lp-btn lp-btn-ghost" type="button" onclick="location.reload()">Cuba lagi</button>
+  </div></div></div>`;
+}
+
+async function boot() {
+  if (!window.api) return failed('Pustaka Supabase gagal dimuat. Semak sambungan internet.');
+  if (!SLUG) return notFound();
+  try {
+    const row = await api.landingBySlug(SLUG);
+    // RLS: draf tidak dikembalikan kepada orang awam, jadi ini juga keadaan 404
+    if (!row) return notFound();
+    const meta = lpMeta(row);
+    setMeta(meta.title, meta.description, row.status !== 'published');
+    const note = row.status === 'published' ? '' : `<div class="lp-note">Pratonton draf — halaman ini belum diterbitkan. <a href="bina.html">Buka pembina</a></div>`;
+    pageEl.innerHTML = note + lpHTML(row);
+  } catch (e) {
+    failed(e && e.message ? e.message : 'Tiada sambungan internet.');
+  }
+}
+boot();
+</script>
+</body>
+</html>
