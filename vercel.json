@@ -1,0 +1,7 @@
+{
+  "rewrites": [
+    { "source": "/l/:slug", "destination": "/l.html" },
+    { "source": "/l", "destination": "/l.html" }
+  ],
+  "cleanUrls": false
+}
